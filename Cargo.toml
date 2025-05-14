@@ -1,0 +1,6 @@
+[workspace]
+members = [
+  "bin",
+  "core",
+  # add more as packages grow
+]
