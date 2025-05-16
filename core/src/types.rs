@@ -15,9 +15,20 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod circuit;
-pub mod constant;
-pub mod operations;
-pub mod prelude;
-pub mod state;
-pub mod types;
+use ndarray::{Array1, Array2, Array3};
+use num_complex::Complex64;
+
+/// Index type for qubit
+pub type Qubit = usize;
+
+/// Mathematical type for complex number
+pub type Complex = Complex64;
+
+/// Mathematical structure for 1d tensor (Vector)
+pub type Vector<T> = Array1<T>;
+
+/// Mathematical structure for 2d tensor (Matrix)
+pub type Matrix<T> = Array2<T>;
+
+/// Mathematical structure for 3d tensor (Tensor)
+pub type Tensor<T> = Array3<T>;

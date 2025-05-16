@@ -16,8 +16,9 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::SingleQubit;
-use crate::math::{Complex, Matrix, PI};
+use crate::constant::PI;
 use crate::operations::QuantumGate;
+use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
 
 #[derive(Debug, Clone)]
@@ -35,11 +36,11 @@ use ndarray::array;
 /// This gate leaves the quantum state completely unchanged. It's useful in quantum algorithms,
 /// error correction, and circuit design for padding or alignment purposes.
 pub struct Identity {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl Identity {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -57,14 +58,14 @@ impl QuantumGate for Identity {
     fn name(&self) -> String {
         String::from("I")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for Identity {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()

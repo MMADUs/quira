@@ -16,8 +16,8 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::SingleQubit;
-use crate::math::{Complex, Matrix};
 use crate::operations::QuantumGate;
+use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
 
 #[derive(Debug, Clone)]
@@ -34,7 +34,7 @@ use ndarray::array;
 /// where α* and β* are complex conjugates of α and β respectively.
 /// The parameters must satisfy |α|² + |β|² = 1 to ensure unitarity.
 pub struct Arbitrary {
-    qubit: usize,
+    qubit: Qubit,
     alpha_re: f64,
     alpha_im: f64,
     beta_re: f64,
@@ -44,7 +44,7 @@ pub struct Arbitrary {
 
 impl Arbitrary {
     pub fn new(
-        qubit: usize,
+        qubit: Qubit,
         alpha_re: f64,
         alpha_im: f64,
         beta_re: f64,
@@ -100,14 +100,14 @@ impl QuantumGate for Arbitrary {
     fn name(&self) -> String {
         String::from("AR")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for Arbitrary {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the arbitrary real part of alpha
     fn alpha_re(&self) -> f64 {
         self.alpha_re
@@ -157,14 +157,14 @@ impl SingleQubit for Arbitrary {
 /// - U(0,0,π/2) = S (Phase gate)
 /// - U(0,0,π/4) = T (π/8 gate)
 pub struct UGate {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
     phi: f64,
     lambda: f64,
 }
 
 impl UGate {
-    pub fn new(qubit: usize, theta: f64, phi: f64, lambda: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64, phi: f64, lambda: f64) -> Self {
         Self {
             qubit,
             theta,
@@ -199,36 +199,36 @@ impl QuantumGate for UGate {
     fn name(&self) -> String {
         format!("U({:.4}, {:.4}, {:.4})", self.theta, self.phi, self.lambda)
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for UGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the arbitrary real part of alpha
     fn alpha_re(&self) -> f64 {
-        self.alpha_re
+        0.0
     }
 
     /// returns the arbitrary imaginary part of alpha
     fn alpha_im(&self) -> f64 {
-        self.alpha_im
+        0.0
     }
 
     /// returns the arbitrary real part of beta
     fn beta_re(&self) -> f64 {
-        self.beta_re
+        0.0
     }
 
     /// returns the arbitrary imaginary part of beta
     fn beta_im(&self) -> f64 {
-        self.beta_im
+        0.0
     }
 
     /// returns the arbitrary global phase
     fn global_phase(&self) -> f64 {
-        self.global_phase
+        0.0
     }
 }

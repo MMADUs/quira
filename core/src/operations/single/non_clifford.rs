@@ -16,8 +16,9 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::SingleQubit;
-use crate::math::{Complex, Matrix, PI};
+use crate::constant::PI;
 use crate::operations::QuantumGate;
+use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
 
 #[derive(Debug, Clone)]
@@ -39,11 +40,11 @@ use ndarray::array;
 /// to achieve universal quantum computation. It's also known as the π/8 gate
 /// (because its effect is a rotation of π/4 which is π/8 radians).
 pub struct TGate {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl TGate {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -64,14 +65,14 @@ impl QuantumGate for TGate {
     fn name(&self) -> String {
         String::from("T")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for TGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 8.0).cos()
@@ -116,11 +117,11 @@ impl SingleQubit for TGate {
 /// The T† gate is used to undo the effect of the T gate and is also an important
 /// component in many quantum algorithms and error correction protocols.
 pub struct InvTGate {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl InvTGate {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -141,14 +142,14 @@ impl QuantumGate for InvTGate {
     fn name(&self) -> String {
         String::from("Inv-T")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for InvTGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 8.0).cos()

@@ -24,9 +24,6 @@ pub mod universal;
 
 /// every single qubit operations must satisfy this trait.
 pub trait SingleQubit: Send + Sync {
-    /// Get the target qubit
-    fn target_qubit(&self) -> usize;
-
     /// alpha real Re(α) of the on-diagonal elements of the unitary matrix.
     fn alpha_re(&self) -> f64;
 

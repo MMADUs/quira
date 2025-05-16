@@ -16,8 +16,9 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::SingleQubit;
-use crate::math::{Complex, Matrix, PI};
+use crate::constant::PI;
 use crate::operations::QuantumGate;
+use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
 
 #[derive(Debug, Clone)]
@@ -31,11 +32,11 @@ use ndarray::array;
 /// X = [ [ 0, 1 ],
 ///       [ 1, 0 ] ]
 pub struct PauliX {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl PauliX {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -53,14 +54,14 @@ impl QuantumGate for PauliX {
     fn name(&self) -> String {
         String::from("X")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for PauliX {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -98,11 +99,11 @@ impl SingleQubit for PauliX {
 /// Y = [ [ 0, -i ],
 ///       [ i,  0 ] ]
 pub struct PauliY {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl PauliY {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -120,14 +121,14 @@ impl QuantumGate for PauliY {
     fn name(&self) -> String {
         String::from("Y")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for PauliY {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -165,11 +166,11 @@ impl SingleQubit for PauliY {
 /// Z = [ [ 1,  0 ],
 ///       [ 0, -1 ] ]
 pub struct PauliZ {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl PauliZ {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -187,14 +188,14 @@ impl QuantumGate for PauliZ {
     fn name(&self) -> String {
         String::from("Z")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for PauliZ {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -217,7 +218,7 @@ impl SingleQubit for PauliZ {
 
     /// returns the global phase
     fn global_phase(&self) -> f64 {
-        PI / 2
+        PI / 2.0
     }
 }
 
@@ -234,11 +235,11 @@ impl SingleQubit for PauliZ {
 ///
 /// Applying this gate twice is equivalent to applying the X gate once.
 pub struct SqrtPauliX {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl SqrtPauliX {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -259,14 +260,14 @@ impl QuantumGate for SqrtPauliX {
     fn name(&self) -> String {
         String::from("Sqrt-X")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for SqrtPauliX {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -304,11 +305,11 @@ impl SingleQubit for SqrtPauliX {
 /// Applying this gate twice is equivalent to applying the X gate once,
 /// and applying it after the √X gate results in the identity gate.
 pub struct InvSqrtPauliX {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl InvSqrtPauliX {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -329,14 +330,14 @@ impl QuantumGate for InvSqrtPauliX {
     fn name(&self) -> String {
         String::from("Inv-Sqrt-X")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for InvSqrtPauliX {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -371,11 +372,11 @@ impl SingleQubit for InvSqrtPauliX {
 ///
 /// Applying this gate twice is equivalent to applying the Y gate once.
 pub struct SqrtPauliY {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl SqrtPauliY {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -396,14 +397,14 @@ impl QuantumGate for SqrtPauliY {
     fn name(&self) -> String {
         String::from("Sqrt-Y")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for SqrtPauliY {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -441,11 +442,11 @@ impl SingleQubit for SqrtPauliY {
 /// Applying this gate twice is equivalent to applying the Y gate once,
 /// and applying it after the √Y gate results in the identity gate.
 pub struct InvSqrtPauliY {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl InvSqrtPauliY {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -466,14 +467,14 @@ impl QuantumGate for InvSqrtPauliY {
     fn name(&self) -> String {
         String::from("Inv-Sqrt-Y")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for InvSqrtPauliY {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -513,11 +514,11 @@ impl SingleQubit for InvSqrtPauliY {
 ///
 /// The Hadamard gate is self-inverse: applying it twice results in the identity.
 pub struct Hadamard {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl Hadamard {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -536,14 +537,14 @@ impl QuantumGate for Hadamard {
     fn name(&self) -> String {
         String::from("H")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for Hadamard {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -583,11 +584,11 @@ impl SingleQubit for Hadamard {
 ///
 /// Applying this gate twice is equivalent to applying the Z gate once.
 pub struct SGate {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl SGate {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -605,14 +606,14 @@ impl QuantumGate for SGate {
     fn name(&self) -> String {
         String::from("S")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for SGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         1.0 / ((2.0_f64).sqrt())
@@ -652,11 +653,11 @@ impl SingleQubit for SGate {
 ///
 /// Applying this gate after the S gate results in the identity gate.
 pub struct InvSGate {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl InvSGate {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -674,14 +675,14 @@ impl QuantumGate for InvSGate {
     fn name(&self) -> String {
         String::from("Inv-S")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for InvSGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         1.0 / ((2.0_f64).sqrt())

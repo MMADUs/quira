@@ -16,8 +16,8 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::SingleQubit;
-use crate::math::{Complex, Matrix};
 use crate::operations::QuantumGate;
+use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
 
 #[derive(Debug, Clone)]
@@ -32,12 +32,12 @@ use ndarray::array;
 ///
 /// This gate is equivalent to e^(-i*θ*X/2) where X is the Pauli-X matrix.
 pub struct RotateX {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
 }
 
 impl RotateX {
-    pub fn new(qubit: usize, theta: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64) -> Self {
         Self { qubit, theta }
     }
 }
@@ -57,14 +57,14 @@ impl QuantumGate for RotateX {
     fn name(&self) -> String {
         String::from("RX")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for RotateX {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -103,12 +103,12 @@ impl SingleQubit for RotateX {
 ///
 /// This gate is equivalent to e^(-i*θ*Y/2) where Y is the Pauli-Y matrix.
 pub struct RotateY {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
 }
 
 impl RotateY {
-    pub fn new(qubit: usize, theta: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64) -> Self {
         Self { qubit, theta }
     }
 }
@@ -128,14 +128,14 @@ impl QuantumGate for RotateY {
     fn name(&self) -> String {
         String::from("RY")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for RotateY {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -174,12 +174,12 @@ impl SingleQubit for RotateY {
 ///
 /// This gate is equivalent to e^(-i*θ*Z/2) where Z is the Pauli-Z matrix.
 pub struct RotateZ {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
 }
 
 impl RotateZ {
-    pub fn new(qubit: usize, theta: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64) -> Self {
         RotateZ { qubit, theta }
     }
 }
@@ -199,14 +199,14 @@ impl QuantumGate for RotateZ {
     fn name(&self) -> String {
         String::from("RZ")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for RotateZ {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -245,13 +245,13 @@ impl SingleQubit for RotateZ {
 ///
 /// This gate combines aspects of both RX and RY rotations and allows for arbitrary rotations in the XY-plane.
 pub struct RotateXY {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
     phi: f64,
 }
 
 impl RotateXY {
-    pub fn new(qubit: usize, theta: f64, phi: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64, phi: f64) -> Self {
         Self { qubit, theta, phi }
     }
 }
@@ -276,14 +276,14 @@ impl QuantumGate for RotateXY {
     fn name(&self) -> String {
         String::from("RXY")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for RotateXY {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -328,12 +328,12 @@ impl SingleQubit for RotateXY {
 ///
 /// This is useful for adjusting relative phases between the computational basis states.
 pub struct PhaseShiftState1 {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
 }
 
 impl PhaseShiftState1 {
-    pub fn new(qubit: usize, theta: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64) -> Self {
         Self { qubit, theta }
     }
 }
@@ -355,14 +355,14 @@ impl QuantumGate for PhaseShiftState1 {
     fn name(&self) -> String {
         String::from("Phase-Shift-1")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for PhaseShiftState1 {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -403,12 +403,12 @@ impl SingleQubit for PhaseShiftState1 {
 ///
 /// This is the complement to PhaseShiftState1 and allows for precise control of qubit phases.
 pub struct PhaseShiftState0 {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
 }
 
 impl PhaseShiftState0 {
-    pub fn new(qubit: usize, theta: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64) -> Self {
         Self { qubit, theta }
     }
 }
@@ -430,14 +430,14 @@ impl QuantumGate for PhaseShiftState0 {
     fn name(&self) -> String {
         String::from("Phase-Shift-0")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for PhaseShiftState0 {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -482,14 +482,14 @@ impl SingleQubit for PhaseShiftState0 {
 ///
 /// This is a generalized rotation gate that can represent any single-qubit unitary operation.
 pub struct RotateAroundSphericalAxis {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
     spherical_theta: f64,
     spherical_phi: f64,
 }
 
 impl RotateAroundSphericalAxis {
-    pub fn new(qubit: usize, theta: f64, spherical_theta: f64, spherical_phi: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64, spherical_theta: f64, spherical_phi: f64) -> Self {
         Self {
             qubit,
             theta,
@@ -520,14 +520,14 @@ impl QuantumGate for RotateAroundSphericalAxis {
     fn name(&self) -> String {
         String::from("RS")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for RotateAroundSphericalAxis {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()

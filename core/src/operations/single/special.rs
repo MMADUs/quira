@@ -16,8 +16,9 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::SingleQubit;
-use crate::math::{Complex, Matrix, PI};
+use crate::constant::PI;
 use crate::operations::QuantumGate;
+use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
 
 #[derive(Debug, Clone)]
@@ -33,11 +34,11 @@ use ndarray::array;
 /// This gate is equivalent to e^(i*π/4) * RX(π/2) where RX is the rotation around X-axis.
 /// It maps |0⟩ to (|0⟩ + i|1⟩)/√2 and |1⟩ to (i|0⟩ + |1⟩)/√2.
 pub struct SXGate {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl SXGate {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -59,14 +60,14 @@ impl QuantumGate for SXGate {
     fn name(&self) -> String {
         String::from("SX")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for SXGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -105,11 +106,11 @@ impl SingleQubit for SXGate {
 ///
 /// This gate is equivalent to e^(i*π/4) * RX(-π/2) where RX is the rotation around X-axis.
 pub struct InvSXGate {
-    qubit: usize,
+    qubit: Qubit,
 }
 
 impl InvSXGate {
-    pub fn new(qubit: usize) -> Self {
+    pub fn new(qubit: Qubit) -> Self {
         Self { qubit }
     }
 }
@@ -131,14 +132,14 @@ impl QuantumGate for InvSXGate {
     fn name(&self) -> String {
         String::from("Inv-SX")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for InvSXGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -178,12 +179,12 @@ impl SingleQubit for InvSXGate {
 ///
 /// When θ=0, this becomes equivalent to the Pauli-X gate.
 pub struct GPi {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
 }
 
 impl GPi {
-    pub fn new(qubit: usize, theta: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64) -> Self {
         Self { qubit, theta }
     }
 }
@@ -203,14 +204,14 @@ impl QuantumGate for GPi {
     fn name(&self) -> String {
         String::from("GPi")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for GPi {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -250,12 +251,12 @@ impl SingleQubit for GPi {
 ///
 /// When θ=0, this is equivalent to a 90-degree rotation around the X-axis (√X gate without the global phase).
 pub struct GPi2 {
-    qubit: usize,
+    qubit: Qubit,
     theta: f64,
 }
 
 impl GPi2 {
-    pub fn new(qubit: usize, theta: f64) -> Self {
+    pub fn new(qubit: Qubit, theta: f64) -> Self {
         Self { qubit, theta }
     }
 }
@@ -275,14 +276,14 @@ impl QuantumGate for GPi2 {
     fn name(&self) -> String {
         String::from("GPi2")
     }
+
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
 }
 
 impl SingleQubit for GPi2 {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> usize {
-        self.qubit
-    }
-
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         1.0 / 2.0_f64.sqrt()
