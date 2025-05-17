@@ -31,8 +31,10 @@ use ndarray::array;
 ///
 /// T = [ [ 1, 0        ],
 ///       [ 0, e^(iπ/4) ] ]
+///
 ///   = [ [ 1, 0                     ],
 ///       [ 0, cos(π/4) + i*sin(π/4) ] ]
+///
 ///   = [ [ 1, 0           ],
 ///       [ 0, 1/√2 + i/√2 ] ]
 ///
@@ -109,8 +111,10 @@ impl SingleQubit for TGate {
 ///
 /// T† = [ [ 1, 0         ],
 ///        [ 0, e^(-iπ/4) ] ]
+///
 ///    = [ [ 1, 0                     ],
 ///        [ 0, cos(π/4) - i*sin(π/4) ] ]
+///
 ///    = [ [ 1, 0           ],
 ///        [ 0, 1/√2 - i/√2 ] ]
 ///
@@ -172,6 +176,6 @@ impl SingleQubit for InvTGate {
 
     /// returns the global phase
     fn global_phase(&self) -> f64 {
-        (-1.0) * PI / 8.0
+        (-1.0 * PI) / 8.0
     }
 }

@@ -16,7 +16,6 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::SingleQubit;
-use crate::constant::PI;
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
@@ -68,7 +67,7 @@ impl QuantumGate for Identity {
 impl SingleQubit for Identity {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
-        (PI / 4.0).cos()
+        1.0
     }
 
     /// returns the imaginary part of alpha
@@ -83,11 +82,11 @@ impl SingleQubit for Identity {
 
     /// returns the imaginary part of beta
     fn beta_im(&self) -> f64 {
-        (PI / 4.0).sin()
+        0.0
     }
 
     /// returns the global phase
     fn global_phase(&self) -> f64 {
-        PI / 4.0
+        0.0
     }
 }

@@ -55,7 +55,7 @@ impl QuantumGate for RotateX {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("RX")
+        format!("RX({:.4})", self.theta)
     }
 
     /// returns the index of the qubit this gate operates on.
@@ -82,7 +82,7 @@ impl SingleQubit for RotateX {
 
     /// returns the imaginary part of beta
     fn beta_im(&self) -> f64 {
-        (self.theta / 2.0).sin() * (-1.0)
+        (-1.0) * (self.theta / 2.0).sin()
     }
 
     /// returns the global phase
@@ -126,7 +126,7 @@ impl QuantumGate for RotateY {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("RY")
+        format!("RY({:.4})", self.theta)
     }
 
     /// returns the index of the qubit this gate operates on.
@@ -197,7 +197,7 @@ impl QuantumGate for RotateZ {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("RZ")
+        format!("RZ({:.4})", self.theta)
     }
 
     /// returns the index of the qubit this gate operates on.
@@ -214,7 +214,7 @@ impl SingleQubit for RotateZ {
 
     /// returns the imaginary part of alpha
     fn alpha_im(&self) -> f64 {
-        (self.theta / 2.0).sin() * (-1.0)
+        (-1.0) * (self.theta / 2.0).sin()
     }
 
     /// returns the real part of beta
@@ -274,7 +274,7 @@ impl QuantumGate for RotateXY {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("RXY")
+        format!("RXY({:.4}, {:.4})", self.theta, self.phi)
     }
 
     /// returns the index of the qubit this gate operates on.
@@ -304,8 +304,8 @@ impl SingleQubit for RotateXY {
     /// returns the imaginary part of beta
     fn beta_im(&self) -> f64 {
         let s = (self.theta / 2.0).sin();
-        let vy = (self.phi).cos();
-        s * vy * (-1.0)
+        let vx = (self.phi).cos();
+        (-1.0) * s * vx
     }
 
     /// returns the global phase
@@ -323,6 +323,7 @@ impl SingleQubit for RotateXY {
 ///
 /// PhaseShiftState1(θ) = [ [ 1, 0                 ],
 ///                         [ 0, cos(θ) + i*sin(θ) ] ]
+///
 ///                     = [ [ 1, 0      ],
 ///                         [ 0, e^(iθ) ] ]
 ///
@@ -353,7 +354,7 @@ impl QuantumGate for PhaseShiftState1 {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Phase-Shift-1")
+        format!("Phase-Shift-1({:.4})", self.theta)
     }
 
     /// returns the index of the qubit this gate operates on.
@@ -370,7 +371,7 @@ impl SingleQubit for PhaseShiftState1 {
 
     /// returns the imaginary part of alpha
     fn alpha_im(&self) -> f64 {
-        (self.theta / 2.0).sin() * (-1.0)
+        (-1.0) * (self.theta / 2.0).sin()
     }
 
     /// returns the real part of beta
@@ -398,6 +399,7 @@ impl SingleQubit for PhaseShiftState1 {
 ///
 /// PhaseShiftState0(θ) = [ [ cos(θ) + i*sin(θ), 0 ],
 ///                         [ 0                , 1 ] ]
+///
 ///                     = [ [ e^(iθ), 0 ],
 ///                         [ 0     , 1 ] ]
 ///
@@ -428,7 +430,7 @@ impl QuantumGate for PhaseShiftState0 {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Phase-Shift-0")
+        format!("Phase-Shift-0({:.4})", self.theta)
     }
 
     /// returns the index of the qubit this gate operates on.
@@ -518,7 +520,7 @@ impl QuantumGate for RotateAroundSphericalAxis {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("RS")
+        format!("RAS({:.4}, {:.4}, {:.4})", self.theta, self.spherical_theta, self.spherical_phi)
     }
 
     /// returns the index of the qubit this gate operates on.
@@ -537,7 +539,7 @@ impl SingleQubit for RotateAroundSphericalAxis {
     fn alpha_im(&self) -> f64 {
         let s = (self.theta / 2.0).sin();
         let vz = (self.spherical_theta).cos();
-        s * vz * (-1.0)
+        (-1.0) * s * vz
     }
 
     /// returns the real part of beta
@@ -553,7 +555,7 @@ impl SingleQubit for RotateAroundSphericalAxis {
         let s = (self.theta / 2.0).sin();
         let vx = (self.spherical_phi).cos();
         let st = (self.spherical_theta).sin();
-        s * vx * st * (-1.0)
+        (-1.0) * s * vx * st
     }
 
     /// returns the global phase

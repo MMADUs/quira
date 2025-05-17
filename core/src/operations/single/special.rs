@@ -85,7 +85,7 @@ impl SingleQubit for SXGate {
 
     /// returns the imaginary part of beta
     fn beta_im(&self) -> f64 {
-        (PI / 4.0).sin() * (-1.0)
+        (-1.0) * (PI / 4.0).sin()
     }
 
     /// returns the global phase
@@ -202,7 +202,7 @@ impl QuantumGate for GPi {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("GPi")
+        format!("GPi({:.4})", self.theta)
     }
 
     /// returns the index of the qubit this gate operates on.
@@ -229,7 +229,7 @@ impl SingleQubit for GPi {
 
     /// returns the imaginary part of beta
     fn beta_im(&self) -> f64 {
-        (self.theta).cos() * -1.0
+        (-1.0) * (self.theta).cos()
     }
 
     /// returns the global phase
@@ -274,7 +274,7 @@ impl QuantumGate for GPi2 {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("GPi2")
+        format!("GPi2({:.4})", self.theta)
     }
 
     /// returns the index of the qubit this gate operates on.
@@ -301,7 +301,7 @@ impl SingleQubit for GPi2 {
 
     /// returns the imaginary part of beta
     fn beta_im(&self) -> f64 {
-        (self.theta).cos() * -1.0 / 2.0_f64.sqrt()
+        (-1.0 * (self.theta).cos()) / 2.0_f64.sqrt()
     }
 
     /// returns the global phase

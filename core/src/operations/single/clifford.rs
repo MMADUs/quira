@@ -487,7 +487,7 @@ impl SingleQubit for InvSqrtPauliY {
 
     /// returns the real part of beta
     fn beta_re(&self) -> f64 {
-        (PI / 4.0).sin() * (-1.0)
+        (-1.0) * (PI / 4.0).sin()
     }
 
     /// returns the imaginary part of beta
@@ -705,6 +705,6 @@ impl SingleQubit for InvSGate {
 
     /// returns the global phase
     fn global_phase(&self) -> f64 {
-        -1.0 * PI / 4.0
+        (-1.0 * PI) / 4.0
     }
 }

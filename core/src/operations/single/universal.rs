@@ -179,7 +179,6 @@ impl QuantumGate for UGate {
     fn unitary_matrix(&self) -> Matrix<Complex> {
         let c: f64 = (self.theta / 2.0).cos();
         let s: f64 = (self.theta / 2.0).sin();
-
         array![
             [
                 Complex::new(c, 0.0),
@@ -188,8 +187,8 @@ impl QuantumGate for UGate {
             [
                 Complex::new(s * self.phi.cos(), s * self.phi.sin()),
                 Complex::new(
-                    c * self.phi.cos() * self.lambda.cos() - self.phi.sin() * self.lambda.sin(),
-                    c * self.phi.cos() * self.lambda.sin() + self.phi.sin() * self.lambda.cos()
+                    c * (self.phi.cos() * self.lambda.cos() - self.phi.sin() * self.lambda.sin()),
+                    c * (self.phi.cos() * self.lambda.sin() + self.phi.sin() * self.lambda.cos())
                 )
             ]
         ]
@@ -209,26 +208,26 @@ impl QuantumGate for UGate {
 impl SingleQubit for UGate {
     /// returns the arbitrary real part of alpha
     fn alpha_re(&self) -> f64 {
-        0.0
+        (self.theta / 2.0).cos() * self.global_phase().cos()
     }
 
     /// returns the arbitrary imaginary part of alpha
     fn alpha_im(&self) -> f64 {
-        0.0
+        (self.theta / 2.0).cos() * self.global_phase().sin()
     }
 
     /// returns the arbitrary real part of beta
     fn beta_re(&self) -> f64 {
-        0.0
+        (-1.0) * (self.theta / 2.0).sin() * (self.lambda - self.phi).cos()
     }
 
     /// returns the arbitrary imaginary part of beta
     fn beta_im(&self) -> f64 {
-        0.0
+        (-1.0) * (self.theta / 2.0).sin() * (self.lambda - self.phi).sin()
     }
 
     /// returns the arbitrary global phase
     fn global_phase(&self) -> f64 {
-        0.0
+        (self.phi + self.lambda) / 2.0
     }
 }
