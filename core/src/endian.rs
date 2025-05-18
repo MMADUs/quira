@@ -80,21 +80,27 @@ pub(crate) fn permutation_matrix(n: usize, targets: &[usize]) -> Matrix<Complex>
 /// Embeds a k-qubit gate g into an n-qubit Hilbert space,
 /// acting on the qubits specified in targets.
 /// Returns the full 2^n x 2^n unitary matrix.
-pub(crate) fn embed_gate(
-    n: usize,
-    targets: &[usize],
-    g: &Matrix<Complex>,
-) -> Matrix<Complex> {
+pub(crate) fn embed_gate(n: usize, targets: &[usize], g: &Matrix<Complex>) -> Matrix<Complex> {
     let k = targets.len();
-    assert_eq!(g.shape(), &[1 << k, 1 << k], "Gate dimension must be 2^k x 2^k");
-    // Construct permutation matrix P and its inverse (transpose)
-    let p = permutation_matrix(n, targets);
+    assert_eq!(
+        g.shape(),
+        &[1 << k, 1 << k],
+        "Gate dimension must be 2^k x 2^k"
+    );
+
+    // IBM qubit 0 is the MSB, so reverse the indices
+    fn reverse_indices(n: usize, indices: &[usize]) -> Vec<usize> {
+        indices.iter().map(|&i| n - 1 - i).collect()
+    }
+
+    let ibm_targets = reverse_indices(n, targets);
+    let p = permutation_matrix(n, &ibm_targets);
     let p_inv = p.t().mapv(|c| c.conj()).to_owned();
-    // Identity on the (n-k) remaining qubits
+
     let id = Matrix::<Complex>::eye(1 << (n - k));
-    // Kronecker product: G ⊗ I_{n-k}
     let g_kron = kronecker_product(&g, &id);
-    // Full operator U = P⁻¹ (G ⊗ I) P
-    let u = p_inv.dot(&g_kron).dot(&p);
-    u
+
+    p_inv.dot(&g_kron).dot(&p)
 }
+
+// NOTE: remove reverse_indices and swap kroneker to make the order same as ibm composer
