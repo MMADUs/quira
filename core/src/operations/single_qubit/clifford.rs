@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::SingleQubit;
+use super::{SingleQubit, SingleQubitGate};
 use crate::constant::PI;
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
@@ -55,13 +55,20 @@ impl QuantumGate for PauliX {
         String::from("X")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for PauliX {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for PauliX {
+impl SingleQubitGate for PauliX {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -122,13 +129,20 @@ impl QuantumGate for PauliY {
         String::from("Y")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for PauliY {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for PauliY {
+impl SingleQubitGate for PauliY {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -189,13 +203,20 @@ impl QuantumGate for PauliZ {
         String::from("Z")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for PauliZ {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for PauliZ {
+impl SingleQubitGate for PauliZ {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -261,13 +282,20 @@ impl QuantumGate for SqrtPauliX {
         String::from("Sqrt-X")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for SqrtPauliX {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for SqrtPauliX {
+impl SingleQubitGate for SqrtPauliX {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -331,13 +359,20 @@ impl QuantumGate for InvSqrtPauliX {
         String::from("Inv-Sqrt-X")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for InvSqrtPauliX {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for InvSqrtPauliX {
+impl SingleQubitGate for InvSqrtPauliX {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -398,13 +433,20 @@ impl QuantumGate for SqrtPauliY {
         String::from("Sqrt-Y")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for SqrtPauliY {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for SqrtPauliY {
+impl SingleQubitGate for SqrtPauliY {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -468,13 +510,20 @@ impl QuantumGate for InvSqrtPauliY {
         String::from("Inv-Sqrt-Y")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for InvSqrtPauliY {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for InvSqrtPauliY {
+impl SingleQubitGate for InvSqrtPauliY {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 4.0).cos()
@@ -538,13 +587,20 @@ impl QuantumGate for Hadamard {
         String::from("H")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for Hadamard {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for Hadamard {
+impl SingleQubitGate for Hadamard {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -607,13 +663,20 @@ impl QuantumGate for SGate {
         String::from("S")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for SGate {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for SGate {
+impl SingleQubitGate for SGate {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         1.0 / ((2.0_f64).sqrt())
@@ -676,13 +739,20 @@ impl QuantumGate for InvSGate {
         String::from("Inv-S")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for InvSGate {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for InvSGate {
+impl SingleQubitGate for InvSGate {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         1.0 / ((2.0_f64).sqrt())
@@ -706,5 +776,165 @@ impl SingleQubit for InvSGate {
     /// returns the global phase
     fn global_phase(&self) -> f64 {
         (-1.0 * PI) / 4.0
+    }
+}
+
+#[derive(Debug, Clone)]
+/// Represents the √X (square root of X) gate, also known as the √NOT gate.
+///
+/// This gate performs half of a NOT operation. Applying it twice is equivalent to a full X (NOT) gate.
+///
+/// The matrix form is:
+///
+/// SX = [ [ (1+i)/2, (1-i)/2 ],
+///        [ (1-i)/2, (1+i)/2 ] ]
+///
+/// This gate is equivalent to e^(i*π/4) * RX(π/2) where RX is the rotation around X-axis.
+/// It maps |0⟩ to (|0⟩ + i|1⟩)/√2 and |1⟩ to (i|0⟩ + |1⟩)/√2.
+pub struct SXGate {
+    qubit: Qubit,
+}
+
+impl SXGate {
+    pub fn new(qubit: Qubit) -> Self {
+        Self { qubit }
+    }
+}
+
+impl QuantumGate for SXGate {
+    /// construct the 2x2 matrix representing the gate.
+    fn unitary_matrix(&self) -> Matrix<Complex> {
+        let theta: f64 = PI / 2.0;
+        let c: f64 = (theta / 2.0).cos();
+        let s: f64 = (theta / 2.0).sin();
+        let gp = Complex::new(0.0, PI / 4.0).exp();
+        array![
+            [gp * Complex::new(c, 0.0), gp * Complex::new(0.0, -1.0 * s)],
+            [gp * Complex::new(0.0, -1.0 * s), gp * Complex::new(c, 0.0)]
+        ]
+    }
+
+    /// returns the alias name representing the gate.
+    fn name(&self) -> String {
+        String::from("SX")
+    }
+
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for SXGate {
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
+}
+
+impl SingleQubitGate for SXGate {
+    /// returns the real part of alpha
+    fn alpha_re(&self) -> f64 {
+        (PI / 4.0).cos()
+    }
+
+    /// returns the imaginary part of alpha
+    fn alpha_im(&self) -> f64 {
+        0.0
+    }
+
+    /// returns the real part of beta
+    fn beta_re(&self) -> f64 {
+        0.0
+    }
+
+    /// returns the imaginary part of beta
+    fn beta_im(&self) -> f64 {
+        (-1.0) * (PI / 4.0).sin()
+    }
+
+    /// returns the global phase
+    fn global_phase(&self) -> f64 {
+        PI / 4.0
+    }
+}
+
+#[derive(Debug, Clone)]
+/// Represents the inverse of the √X gate (SX†).
+///
+/// This gate is the Hermitian conjugate of the SX gate. Applying SX followed by SX† returns to the original state.
+///
+/// The matrix form is:
+///
+/// SX† = [ [ (1-i)/2, (1-i)/2 ],
+///         [ (1-i)/2, (1+i)/2 ] ]
+///
+/// This gate is equivalent to e^(i*π/4) * RX(-π/2) where RX is the rotation around X-axis.
+pub struct InvSXGate {
+    qubit: Qubit,
+}
+
+impl InvSXGate {
+    pub fn new(qubit: Qubit) -> Self {
+        Self { qubit }
+    }
+}
+
+impl QuantumGate for InvSXGate {
+    /// construct the 2x2 matrix representing the gate.
+    fn unitary_matrix(&self) -> Matrix<Complex> {
+        let theta: f64 = PI / 2.0;
+        let c: f64 = (theta / 2.0).cos();
+        let s: f64 = (theta / 2.0).sin();
+        let gp = Complex::new(0.0, PI / 4.0).exp();
+        array![
+            [gp * Complex::new(c, 0.0), gp * Complex::new(0.0, 1.0 * s)],
+            [gp * Complex::new(0.0, 1.0 * s), gp * Complex::new(c, 0.0)]
+        ]
+    }
+
+    /// returns the alias name representing the gate.
+    fn name(&self) -> String {
+        String::from("Inv-SX")
+    }
+
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for InvSXGate {
+    /// returns the index of the qubit this gate operates on.
+    fn target_qubit(&self) -> Qubit {
+        self.qubit
+    }
+
+}
+
+impl SingleQubitGate for InvSXGate {
+    /// returns the real part of alpha
+    fn alpha_re(&self) -> f64 {
+        (PI / 4.0).cos()
+    }
+
+    /// returns the imaginary part of alpha
+    fn alpha_im(&self) -> f64 {
+        0.0
+    }
+
+    /// returns the real part of beta
+    fn beta_re(&self) -> f64 {
+        0.0
+    }
+
+    /// returns the imaginary part of beta
+    fn beta_im(&self) -> f64 {
+        (PI / 4.0).sin()
+    }
+
+    /// returns the global phase
+    fn global_phase(&self) -> f64 {
+        PI / 4.0
     }
 }

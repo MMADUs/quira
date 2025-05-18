@@ -15,156 +15,11 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::SingleQubit;
+use super::{SingleQubit, SingleQubitGate};
 use crate::constant::PI;
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
-
-#[derive(Debug, Clone)]
-/// Represents the √X (square root of X) gate, also known as the √NOT gate.
-///
-/// This gate performs half of a NOT operation. Applying it twice is equivalent to a full X (NOT) gate.
-///
-/// The matrix form is:
-///
-/// SX = [ [ (1+i)/2, (1-i)/2 ],
-///        [ (1-i)/2, (1+i)/2 ] ]
-///
-/// This gate is equivalent to e^(i*π/4) * RX(π/2) where RX is the rotation around X-axis.
-/// It maps |0⟩ to (|0⟩ + i|1⟩)/√2 and |1⟩ to (i|0⟩ + |1⟩)/√2.
-pub struct SXGate {
-    qubit: Qubit,
-}
-
-impl SXGate {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
-    }
-}
-
-impl QuantumGate for SXGate {
-    /// construct the 2x2 matrix representing the gate.
-    fn unitary_matrix(&self) -> Matrix<Complex> {
-        let theta: f64 = PI / 2.0;
-        let c: f64 = (theta / 2.0).cos();
-        let s: f64 = (theta / 2.0).sin();
-        let gp = Complex::new(0.0, PI / 4.0).exp();
-        array![
-            [gp * Complex::new(c, 0.0), gp * Complex::new(0.0, -1.0 * s)],
-            [gp * Complex::new(0.0, -1.0 * s), gp * Complex::new(c, 0.0)]
-        ]
-    }
-
-    /// returns the alias name representing the gate.
-    fn name(&self) -> String {
-        String::from("SX")
-    }
-
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
-    }
-}
-
-impl SingleQubit for SXGate {
-    /// returns the real part of alpha
-    fn alpha_re(&self) -> f64 {
-        (PI / 4.0).cos()
-    }
-
-    /// returns the imaginary part of alpha
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    /// returns the real part of beta
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    /// returns the imaginary part of beta
-    fn beta_im(&self) -> f64 {
-        (-1.0) * (PI / 4.0).sin()
-    }
-
-    /// returns the global phase
-    fn global_phase(&self) -> f64 {
-        PI / 4.0
-    }
-}
-
-#[derive(Debug, Clone)]
-/// Represents the inverse of the √X gate (SX†).
-///
-/// This gate is the Hermitian conjugate of the SX gate. Applying SX followed by SX† returns to the original state.
-///
-/// The matrix form is:
-///
-/// SX† = [ [ (1-i)/2, (1-i)/2 ],
-///         [ (1-i)/2, (1+i)/2 ] ]
-///
-/// This gate is equivalent to e^(i*π/4) * RX(-π/2) where RX is the rotation around X-axis.
-pub struct InvSXGate {
-    qubit: Qubit,
-}
-
-impl InvSXGate {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
-    }
-}
-
-impl QuantumGate for InvSXGate {
-    /// construct the 2x2 matrix representing the gate.
-    fn unitary_matrix(&self) -> Matrix<Complex> {
-        let theta: f64 = PI / 2.0;
-        let c: f64 = (theta / 2.0).cos();
-        let s: f64 = (theta / 2.0).sin();
-        let gp = Complex::new(0.0, PI / 4.0).exp();
-        array![
-            [gp * Complex::new(c, 0.0), gp * Complex::new(0.0, 1.0 * s)],
-            [gp * Complex::new(0.0, 1.0 * s), gp * Complex::new(c, 0.0)]
-        ]
-    }
-
-    /// returns the alias name representing the gate.
-    fn name(&self) -> String {
-        String::from("Inv-SX")
-    }
-
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
-    }
-}
-
-impl SingleQubit for InvSXGate {
-    /// returns the real part of alpha
-    fn alpha_re(&self) -> f64 {
-        (PI / 4.0).cos()
-    }
-
-    /// returns the imaginary part of alpha
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    /// returns the real part of beta
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    /// returns the imaginary part of beta
-    fn beta_im(&self) -> f64 {
-        (PI / 4.0).sin()
-    }
-
-    /// returns the global phase
-    fn global_phase(&self) -> f64 {
-        PI / 4.0
-    }
-}
 
 #[derive(Debug, Clone)]
 /// Represents a generalized π (Pi) pulse quantum gate.
@@ -205,13 +60,20 @@ impl QuantumGate for GPi {
         format!("GPi({:.4})", self.theta)
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for GPi {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for GPi {
+impl SingleQubitGate for GPi {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
@@ -277,13 +139,20 @@ impl QuantumGate for GPi2 {
         format!("GPi2({:.4})", self.theta)
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for GPi2 {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for GPi2 {
+impl SingleQubitGate for GPi2 {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         1.0 / 2.0_f64.sqrt()

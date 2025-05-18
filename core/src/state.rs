@@ -21,7 +21,7 @@ use rand::Rng;
 
 #[derive(Clone)]
 /// the quantum state is the representation for the entire state of the qubit
-/// in a complex vector space
+/// the state is represented as a hilbert space.
 pub struct QuantumState {
     /// quantum amplitudes in complex vector
     pub amplitudes: Vector<Complex>,
@@ -87,13 +87,13 @@ impl QuantumState {
         self.amplitudes[basis_state]
     }
 
+    /// Get amplitudes as slice
     pub fn amplitudes(&self) -> &[Complex] {
-        // Access the amplitudes as a slice
         self.amplitudes.as_slice().unwrap()
     }
 
+    /// Get amplitudes as mut slice
     pub fn amplitudes_mut(&mut self) -> &mut [Complex] {
-        // Access the amplitudes as a mutable slice
         self.amplitudes.as_slice_mut().unwrap()
     }
 
@@ -198,16 +198,13 @@ impl QuantumState {
         self.amplitudes
             .iter()
             .enumerate()
-            .filter_map(|(i, amp)| {
+            .map(|(i, amp)| {
                 let prob = amp.norm_sqr();
-                if prob < EPSILON {
-                    return None; // skip near-zero amplitudes
-                }
                 let bin = format!("{:0width$b}", i, width = num_qubits);
-                Some(format!(
+                format!(
                     "|{}⟩: {:.4} + {:.4}i (prob = {:.4})",
                     bin, amp.re, amp.im, prob
-                ))
+                )
             })
             .collect()
     }

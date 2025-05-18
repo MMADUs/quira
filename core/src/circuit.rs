@@ -31,7 +31,7 @@ pub struct QuantumCircuit {
     /// state vector for the final quantum state outcome
     base_state: QuantumState,
     /// state vector that represent the current quantum state
-    state: QuantumState,
+    current_state: QuantumState,
     /// applied quantum circuit gates
     gates: Vec<Box<dyn QuantumGate>>,
     /// map of measurements (qubit_index -> classical_bit_index)
@@ -45,7 +45,7 @@ impl QuantumCircuit {
     pub fn new(update_flag: bool) -> Self {
         Self {
             base_state: QuantumState::new(),
-            state: QuantumState::new(),
+            current_state: QuantumState::new(),
             gates: Vec::new(),
             measurements: HashMap::new(),
             direct_apply: update_flag,
@@ -54,7 +54,7 @@ impl QuantumCircuit {
 
     /// Return the number of qubit in the circuit.
     pub fn num_qubits(&self) -> usize {
-        self.state.num_qubits()
+        self.current_state.num_qubits()
     }
 
     /// Create a new qubit with arbitrary state |?⟩.
@@ -63,11 +63,11 @@ impl QuantumCircuit {
             state.len() == 2,
             "New qubit must be a 2-dimensional vector (single qubit)"
         );
-        if self.state.is_empty() {
-            self.state = QuantumState::from(state.clone());
+        if self.current_state.is_empty() {
+            self.current_state = QuantumState::from(state.clone());
             self.base_state = QuantumState::from(state);
         } else {
-            self.state = self.state.tensor_product(state.clone());
+            self.current_state = self.current_state.tensor_product(state.clone());
             self.base_state = self.base_state.tensor_product(state);
         }
         self.num_qubits() - 1
@@ -87,19 +87,19 @@ impl QuantumCircuit {
 
     /// Set and replace the entire qubit state to |0..0⟩.
     pub fn zero(&mut self, num_qubits: usize) {
-        self.state = QuantumState::zero(num_qubits);
+        self.current_state = QuantumState::zero(num_qubits);
         self.base_state = QuantumState::zero(num_qubits)
     }
 
     /// Set and replace the entire qubit state to |1..1⟩.
     pub fn one(&mut self, num_qubits: usize) {
-        self.state = QuantumState::one(num_qubits);
+        self.current_state = QuantumState::one(num_qubits);
         self.base_state = QuantumState::one(num_qubits)
     }
 
     /// Empty the qubit state.
     pub fn reset(&mut self) {
-        self.state = QuantumState::new();
+        self.current_state = QuantumState::new();
         self.base_state = QuantumState::new()
     }
 
@@ -109,7 +109,7 @@ impl QuantumCircuit {
         O: QuantumGate + 'static,
     {
         if self.direct_apply {
-            operation.apply(&mut self.state);
+            operation.apply(&mut self.current_state);
         }
         self.gates.push(Box::new(operation));
         self
@@ -117,7 +117,7 @@ impl QuantumCircuit {
 
     /// Add a measurement operation at the end of circuit.
     pub fn add_measurement(&mut self, qubit: usize, classical_bit: usize) -> &mut Self {
-        if qubit > self.state.num_qubits() {
+        if qubit > self.current_state.num_qubits() {
             panic!("Qubit index out of range");
         }
         self.measurements.insert(qubit, classical_bit);
@@ -134,7 +134,7 @@ impl QuantumCircuit {
             println!("{}", state_str);
         }
         println!("\nTotal Gates to apply: {}", self.gates.len());
-        println!("\nMeasurements: {:?}", self.measurements);
+        println!("Measurements: {:?}", self.measurements);
 
         // Run shots in parallel
         let results: Vec<Vec<bool>> = (0..shots)
@@ -224,6 +224,6 @@ impl QuantumCircuit {
 
     /// Get the current quantum state
     pub fn state(&self) -> Vec<String> {
-        self.state.get_state()
+        self.current_state.get_state()
     }
 }

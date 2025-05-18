@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::SingleQubit;
+use super::{SingleQubit, SingleQubitGate};
 use crate::constant::PI;
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
@@ -68,13 +68,20 @@ impl QuantumGate for TGate {
         String::from("T")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for TGate {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for TGate {
+impl SingleQubitGate for TGate {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 8.0).cos()
@@ -147,13 +154,20 @@ impl QuantumGate for InvTGate {
         String::from("Inv-T")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for InvTGate {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for InvTGate {
+impl SingleQubitGate for InvTGate {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (PI / 8.0).cos()

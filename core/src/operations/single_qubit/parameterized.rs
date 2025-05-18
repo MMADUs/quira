@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::SingleQubit;
+use super::{SingleQubit, SingleQubitGate};
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
@@ -58,13 +58,20 @@ impl QuantumGate for RotateX {
         format!("RX({:.4})", self.theta)
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for RotateX {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for RotateX {
+impl SingleQubitGate for RotateX {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -129,13 +136,20 @@ impl QuantumGate for RotateY {
         format!("RY({:.4})", self.theta)
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for RotateY {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for RotateY {
+impl SingleQubitGate for RotateY {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -200,13 +214,20 @@ impl QuantumGate for RotateZ {
         format!("RZ({:.4})", self.theta)
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for RotateZ {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for RotateZ {
+impl SingleQubitGate for RotateZ {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -277,13 +298,20 @@ impl QuantumGate for RotateXY {
         format!("RXY({:.4}, {:.4})", self.theta, self.phi)
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for RotateXY {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for RotateXY {
+impl SingleQubitGate for RotateXY {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -357,13 +385,20 @@ impl QuantumGate for PhaseShiftState1 {
         format!("Phase-Shift-1({:.4})", self.theta)
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for PhaseShiftState1 {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for PhaseShiftState1 {
+impl SingleQubitGate for PhaseShiftState1 {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -433,13 +468,20 @@ impl QuantumGate for PhaseShiftState0 {
         format!("Phase-Shift-0({:.4})", self.theta)
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for PhaseShiftState0 {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for PhaseShiftState0 {
+impl SingleQubitGate for PhaseShiftState0 {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()
@@ -520,16 +562,26 @@ impl QuantumGate for RotateAroundSphericalAxis {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        format!("RAS({:.4}, {:.4}, {:.4})", self.theta, self.spherical_theta, self.spherical_phi)
+        format!(
+            "RAS({:.4}, {:.4}, {:.4})",
+            self.theta, self.spherical_theta, self.spherical_phi
+        )
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for RotateAroundSphericalAxis {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for RotateAroundSphericalAxis {
+impl SingleQubitGate for RotateAroundSphericalAxis {
     /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos()

@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::SingleQubit;
+use super::{SingleQubit, SingleQubitGate};
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
@@ -101,13 +101,20 @@ impl QuantumGate for Arbitrary {
         String::from("AR")
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for Arbitrary {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for Arbitrary {
+impl SingleQubitGate for Arbitrary {
     /// returns the arbitrary real part of alpha
     fn alpha_re(&self) -> f64 {
         self.alpha_re
@@ -199,13 +206,20 @@ impl QuantumGate for UGate {
         format!("U({:.4}, {:.4}, {:.4})", self.theta, self.phi, self.lambda)
     }
 
+    /// construct targets for quantum state
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target_qubit()]
+    }
+}
+
+impl SingleQubit for UGate {
     /// returns the index of the qubit this gate operates on.
     fn target_qubit(&self) -> Qubit {
         self.qubit
     }
 }
 
-impl SingleQubit for UGate {
+impl SingleQubitGate for UGate {
     /// returns the arbitrary real part of alpha
     fn alpha_re(&self) -> f64 {
         (self.theta / 2.0).cos() * self.global_phase().cos()

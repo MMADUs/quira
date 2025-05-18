@@ -17,13 +17,23 @@
 
 pub mod clifford;
 pub mod non_clifford;
-pub mod rotation;
+pub mod parameterized;
 pub mod special;
 pub mod trivial;
 pub mod universal;
 
-/// every single qubit operations must satisfy this trait.
-pub trait SingleQubit: Send + Sync {
+use crate::types::Qubit;
+
+use super::QuantumGate;
+
+/// single qubit operation.
+pub trait SingleQubit: QuantumGate + Send + Sync {
+    /// the qubit index the operation acts on.
+    fn target_qubit(&self) -> Qubit;
+}
+
+/// single qubit gate operation.
+pub trait SingleQubitGate: Send + Sync {
     /// alpha real Re(α) of the on-diagonal elements of the unitary matrix.
     fn alpha_re(&self) -> f64;
 
@@ -42,11 +52,16 @@ pub trait SingleQubit: Send + Sync {
 
 /// enum definitions
 pub enum SingleQubitOperation {
-    Arbitrary,
+    // parameterized
     RotateX,
     RotateY,
     RotateZ,
     RotateXY,
+    PhaseShift0,
+    PhaseShift1,
+    RotateAroundSphericalAxis,
+
+    // clifford
     PauliX,
     PauliY,
     PauliZ,
@@ -59,13 +74,19 @@ pub enum SingleQubitOperation {
     InvSGate,
     SXGate,
     InvSXGate,
+
+    // non-clifford
     TGate,
     InvTGate,
+
+    // universal
     UGate,
-    PhaseShift0,
-    PhaseShift1,
-    RotateAroundSphericalAxis,
+    Arbitrary,
+
+    // special
     GPi,
     GPi2,
+
+    // trivial
     Identity,
 }

@@ -21,3 +21,4 @@ pub mod operations;
 pub mod prelude;
 pub mod state;
 pub mod types;
+pub mod endian;
