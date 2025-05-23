@@ -24,7 +24,7 @@ use rand::Rng;
 /// the state is represented as a hilbert space.
 pub struct QuantumState {
     /// quantum amplitudes in complex vector
-    pub amplitudes: Vector<Complex>,
+    amplitudes: Vector<Complex>,
 }
 
 impl QuantumState {
@@ -38,6 +38,16 @@ impl QuantumState {
     /// Check if quantum state is empty
     pub fn is_empty(&self) -> bool {
         self.amplitudes.len() == 0
+    }
+
+    /// Set existing state with new state
+    pub fn set(&mut self, amplitudes: Vector<Complex>) {
+        assert!(
+            amplitudes.len().is_power_of_two(),
+            "Amplitude of the vector must have length 2^n"
+        );
+        self.amplitudes = amplitudes;
+        self.normalize();
     }
 
     /// Create new qubit from a set of vector amplitudes.
@@ -82,19 +92,14 @@ impl QuantumState {
         }
     }
 
+    /// Get the reference of the entire amplitudes
+    pub fn amplitudes_as_ref(&self) -> &Vector<Complex> {
+        &self.amplitudes
+    }
+
     /// Get the probability amplitude for a specific basis state
     pub fn amplitude(&self, basis_state: usize) -> Complex {
         self.amplitudes[basis_state]
-    }
-
-    /// Get amplitudes as slice
-    pub fn amplitudes(&self) -> &[Complex] {
-        self.amplitudes.as_slice().unwrap()
-    }
-
-    /// Get amplitudes as mut slice
-    pub fn amplitudes_mut(&mut self) -> &mut [Complex] {
-        self.amplitudes.as_slice_mut().unwrap()
     }
 
     /// Calculate the probability of measuring a specific basis state
@@ -130,7 +135,7 @@ impl QuantumState {
     }
 
     /// Return the tensor product with another qubit state
-    pub fn tensor_product(&self, state: Vector<Complex>) -> Self {
+    pub fn qubit_tensor_product(&self, state: Vector<Complex>) -> Self {
         assert!(state.len() == 2, "Only tensor with a single qubit");
         let mut new_amplitudes = Vec::with_capacity(self.amplitudes.len() * 2);
         for &a in self.amplitudes.iter() {
@@ -193,17 +198,24 @@ impl QuantumState {
     }
 
     /// Return the quantum state as formatted strings.
-    pub fn get_state(&self) -> Vec<String> {
+    pub fn get_state(&self, filter_zero: bool) -> Vec<String> {
         let num_qubits = self.num_qubits();
         self.amplitudes
             .iter()
             .enumerate()
+            .filter(|(_, amp)| {
+                if filter_zero {
+                    amp.norm_sqr() > 1e-12
+                } else {
+                    true
+                }
+            })
             .map(|(i, amp)| {
                 let prob = amp.norm_sqr();
                 let bin = format!("{:0width$b}", i, width = num_qubits);
                 format!(
-                    "|{}⟩: {:.4} + {:.4}i (prob = {:.4})",
-                    bin, amp.re, amp.im, prob
+                    "[{}] |{}⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
+                    i, bin, amp.re, amp.im, prob, prob * 100.0
                 )
             })
             .collect()

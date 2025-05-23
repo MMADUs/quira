@@ -16,9 +16,20 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 pub mod circuit;
+pub use circuit::*;
+
 pub mod constant;
+
 pub mod operations;
+pub use operations::single_qubit as SingleQ;
+pub use operations::two_qubit as TwoQ;
+
 pub mod prelude;
+pub use prelude::*;
+
 pub mod state;
+
 pub mod types;
+
 pub mod endian;
+pub use endian::*;

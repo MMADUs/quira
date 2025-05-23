@@ -24,18 +24,18 @@ use ndarray::array;
 
 use super::TwoQubit;
 
-pub struct CNOT {
+pub struct ControlledNot {
     control: Qubit,
     target: Qubit,
 }
 
-impl CNOT {
+impl ControlledNot {
     pub fn new(control: Qubit, target: Qubit) -> Self {
         Self { control, target }
     }
 }
 
-impl QuantumGate for CNOT {
+impl QuantumGate for ControlledNot {
     fn unitary_matrix(&self) -> Matrix<Complex> {
         array![
             [
@@ -70,11 +70,11 @@ impl QuantumGate for CNOT {
     }
 
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.control_qubit(), self.target_qubit()]
+        vec![self.target_qubit(), self.control_qubit()]
     }
 }
 
-impl TwoQubit for CNOT {
+impl TwoQubit for ControlledNot {
     fn target_qubit(&self) -> Qubit {
         self.target
     }

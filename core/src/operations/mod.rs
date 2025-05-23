@@ -4,7 +4,7 @@ pub mod two_qubit;
 use crate::{
     endian::{expand_unitary, QubitIndexing},
     state::QuantumState,
-    types::{Complex, Matrix, Qubit},
+    types::{Complex, Vector, Matrix, Qubit},
 };
 
 pub trait QuantumGate: Send + Sync {
@@ -24,7 +24,9 @@ pub trait QuantumGate: Send + Sync {
         let unitary = self.unitary_matrix();
         // apply gate to state
         let u = expand_unitary(n, &targets, &unitary, &indexing);
-        state.amplitudes = u.dot(&state.amplitudes)
+        let current_state = state.amplitudes_as_ref();
+        let new_state = u.dot(current_state);
+        state.set(new_state)
     }
 
     ///// Multiply this gate with another gate (matrix multiplication)

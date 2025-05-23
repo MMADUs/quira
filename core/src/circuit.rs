@@ -76,8 +76,8 @@ impl QuantumCircuit {
             self.current_state = QuantumState::from(state.clone());
             self.base_state = QuantumState::from(state);
         } else {
-            self.current_state = self.current_state.tensor_product(state.clone());
-            self.base_state = self.base_state.tensor_product(state);
+            self.current_state = self.current_state.qubit_tensor_product(state.clone());
+            self.base_state = self.base_state.qubit_tensor_product(state);
         }
         self.num_qubits() - 1
     }
@@ -113,34 +113,41 @@ impl QuantumCircuit {
     }
 
     /// Add a operation to the circuit.
-    pub fn add_operation<O>(&mut self, operation: O) -> &mut Self
+    pub fn add_operation<O>(&mut self, operation: O) -> Option<Vector<Complex>>
     where
         O: QuantumGate + 'static,
     {
+        // apply unitary to state directly
         if self.direct_apply {
             operation.apply(&mut self.current_state, &self.qubit_indexing);
         }
+        // save the gate for further measurement
         self.gates.push(Box::new(operation));
-        self
+        // return the current state vector
+        if self.direct_apply {
+            Some(self.current_state.amplitudes_as_ref().clone())
+        } else {
+            None
+        }
     }
 
     /// Add a measurement operation at the end of circuit.
-    pub fn add_measurement(&mut self, qubit: usize, classical_bit: usize) -> &mut Self {
+    pub fn add_measurement(&mut self, qubit: usize, classical_bit: usize) -> bool {
         if qubit > self.current_state.num_qubits() {
             panic!("Qubit index out of range");
         }
         self.measurements.insert(qubit, classical_bit);
-        self
+        self.current_state.measure_qubit(qubit)
     }
 
     /// Execute the circuit and return the measurement counts and probabilities.
     pub fn execute(&self, shots: usize) -> QuantumResult {
         let start_time = Instant::now();
-        println!("Executing quantum circuit with {} shot(s)...", shots);
+        println!("\nExecuting quantum circuit with {} shot(s)...", shots);
 
         // early return if no measurements
         if self.measurements.is_empty() {
-            println!("Warning: No measurements defined in the circuit. Skipping measurements.");
+            println!("\nWarning: No measurements defined in the circuit. Skipping measurements.");
             println!("\nExecution completed in: {:.3?}", start_time.elapsed());
             return QuantumResult {
                 results: Vec::new(),
@@ -184,7 +191,7 @@ impl QuantumCircuit {
     /// Count all the statistical outcome after execution with enhanced formatting and analysis
     pub fn count_outcomes(&self, qr: QuantumResult) {
         if qr.results.is_empty() {
-            println!("No results to count.");
+            println!("\nNo results to count.");
             return;
         }
 
@@ -224,7 +231,7 @@ impl QuantumCircuit {
             a_val.cmp(&b_val)
         });
 
-        println!("\n{:=<60}", "");
+        println!("\n{:=<65}", "");
         println!("MEASUREMENT RESULTS FROM {} SHOTS", qr.shots);
         println!("{:=<65}", "");
 
@@ -287,7 +294,7 @@ impl QuantumCircuit {
             total_probability += probability;
 
             println!(
-                "{:>8} | {:>8} | {:>7.2}% | {:>8.4}",
+                "{:>12} | {:>8} | {:>7.2}% | {:>8.4}",
                 outcome, count, percentage, probability
             );
         }
@@ -354,11 +361,11 @@ impl QuantumCircuit {
         println!("{:=<60}", "");
     }
     /// Get the current quantum state
-    pub fn state_vector(&self) -> Vec<String> {
+    pub fn state_vector(&self, filter_zero: bool) -> Vec<String> {
         println!("\nVector state: ");
-        for state_str in self.current_state.get_state() {
+        for state_str in self.current_state.get_state(filter_zero) {
             println!("{}", state_str);
         }
-        self.current_state.get_state()
+        self.current_state.get_state(filter_zero)
     }
 }

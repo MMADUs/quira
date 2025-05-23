@@ -16,11 +16,22 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 pub mod clifford;
+pub use clifford::*;
+
 pub mod non_clifford;
+pub use non_clifford::*;
+
 pub mod parameterized;
+pub use parameterized::*;
+
 pub mod special;
+pub use special::*;
+
 pub mod trivial;
+pub use trivial::*;
+
 pub mod universal;
+pub use universal::*;
 
 use crate::types::Qubit;
 
