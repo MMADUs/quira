@@ -1,5 +1,21 @@
 use std::fmt;
 
+use crate::types::Complex;
+
+/// Result after long running a quantum circuit
+pub struct RunResult {
+    pub classical_bit: Vec<Vec<bool>>,
+    pub shots: usize,
+}
+
+/// Result of a qubit state
+pub struct QubitState {
+    pub amp_0: Complex,
+    pub amp_1: Complex,
+    pub prob_0: f64,
+    pub prob_1: f64,
+}
+
 /// Error types for quantum operations
 #[derive(Debug)]
 pub enum QuantumError {

@@ -19,19 +19,15 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use crate::{
-    constant::{C_ONE, C_ZERO},
+    constant::{C_ONE, C_ZERO, EPSILON},
     endian::QubitIndexing,
     operations::QuantumGate,
     state::QuantumState,
     types::{Complex, Qubit, Vector},
+    prelude::{RunResult, QubitState},
 };
 
 use rayon::prelude::*;
-
-pub struct QuantumResult {
-    results: Vec<Vec<bool>>,
-    shots: usize,
-}
 
 pub struct QuantumCircuit {
     /// state vector for the final quantum state outcome
@@ -66,12 +62,31 @@ impl QuantumCircuit {
         self.current_state.num_qubits()
     }
 
-    /// Create a new qubit with arbitrary state |?⟩.
-    pub fn qb_new(&mut self, state: Vector<Complex>) -> Qubit {
+    /// Create a new qubit from arbitrary iterator with complex element |?⟩.
+    pub fn qb_from_iter<I>(&mut self, num_iter: I) -> Qubit
+    where
+        I: IntoIterator<Item = Complex>,
+    {
+        let vector = Vector::from_iter(num_iter);
+        self.qb_from_vector(vector)
+    }
+
+    /// Create a new qubit with arbitrary vector state |?⟩.
+    pub fn qb_from_vector(&mut self, mut state: Vector<Complex>) -> Qubit {
         assert!(
             state.len() == 2,
             "New qubit must be a 2-dimensional vector (single qubit)"
         );
+
+        // Normalize the vector here, since we don't know what the arbitrary input is
+        let norm = state.iter().map(|x| (x * x.conj()).re).sum::<f64>().sqrt();
+
+        if norm > EPSILON {
+            state.mapv_inplace(|x| x / norm);
+        } else {
+            panic!("State vector norm is either zero or too small");
+        }
+
         if self.current_state.is_empty() {
             self.current_state = QuantumState::from(state.clone());
             self.base_state = QuantumState::from(state);
@@ -79,29 +94,32 @@ impl QuantumCircuit {
             self.current_state = self.current_state.qubit_tensor_product(state.clone());
             self.base_state = self.base_state.qubit_tensor_product(state);
         }
+
         self.num_qubits() - 1
     }
 
     /// Create a new qubit in zero state |0⟩.
     pub fn qb_zero(&mut self) -> Qubit {
-        let ket_zero = Vector::from_vec(vec![C_ONE, C_ZERO]);
-        self.qb_new(ket_zero)
+        // qubit representation in zero state as vector = [1, 0]
+        let ket_zero = Vector::from_iter([C_ONE, C_ZERO]);
+        self.qb_from_vector(ket_zero)
     }
 
     /// Create a new qubit in one state |1⟩.
     pub fn qb_one(&mut self) -> Qubit {
-        let ket_one = Vector::from_vec(vec![C_ZERO, C_ONE]);
-        self.qb_new(ket_one)
+        // qubit representation in one state as vector = [0, 1]
+        let ket_one = Vector::from_iter([C_ZERO, C_ONE]);
+        self.qb_from_vector(ket_one)
     }
 
     /// Set and replace the entire qubit state to |0..0⟩.
-    pub fn zero(&mut self, num_qubits: usize) {
+    pub fn zeros(&mut self, num_qubits: usize) {
         self.current_state = QuantumState::zero(num_qubits);
         self.base_state = QuantumState::zero(num_qubits)
     }
 
     /// Set and replace the entire qubit state to |1..1⟩.
-    pub fn one(&mut self, num_qubits: usize) {
+    pub fn ones(&mut self, num_qubits: usize) {
         self.current_state = QuantumState::one(num_qubits);
         self.base_state = QuantumState::one(num_qubits)
     }
@@ -112,8 +130,16 @@ impl QuantumCircuit {
         self.base_state = QuantumState::new()
     }
 
+    /// Conditionally add a operation to the circuit.
+    pub fn cond_add<O>(&mut self, condition: bool, operation: O) -> Option<Vector<Complex>>
+    where
+        O: QuantumGate + 'static,
+    {
+        if condition { self.add(operation) } else { None }
+    }
+
     /// Add a operation to the circuit.
-    pub fn add_operation<O>(&mut self, operation: O) -> Option<Vector<Complex>>
+    pub fn add<O>(&mut self, operation: O) -> Option<Vector<Complex>>
     where
         O: QuantumGate + 'static,
     {
@@ -132,7 +158,7 @@ impl QuantumCircuit {
     }
 
     /// Add a measurement operation at the end of circuit.
-    pub fn add_measurement(&mut self, qubit: usize, classical_bit: usize) -> bool {
+    pub fn measure(&mut self, qubit: usize, classical_bit: usize) -> bool {
         if qubit > self.current_state.num_qubits() {
             panic!("Qubit index out of range");
         }
@@ -141,7 +167,7 @@ impl QuantumCircuit {
     }
 
     /// Execute the circuit and return the measurement counts and probabilities.
-    pub fn execute(&self, shots: usize) -> QuantumResult {
+    pub fn run(&self, shots: usize) -> RunResult {
         let start_time = Instant::now();
         println!("\nExecuting quantum circuit with {} shot(s)...", shots);
 
@@ -149,8 +175,8 @@ impl QuantumCircuit {
         if self.measurements.is_empty() {
             println!("\nWarning: No measurements defined in the circuit. Skipping measurements.");
             println!("\nExecution completed in: {:.3?}", start_time.elapsed());
-            return QuantumResult {
-                results: Vec::new(),
+            return RunResult {
+                classical_bit: Vec::new(),
                 shots: 0,
             };
         }
@@ -185,12 +211,12 @@ impl QuantumCircuit {
 
         let duration = start_time.elapsed();
         println!("\nExecution completed in: {:.3?}", duration);
-        QuantumResult { results, shots }
+        RunResult { classical_bit: results, shots }
     }
 
     /// Count all the statistical outcome after execution with enhanced formatting and analysis
-    pub fn count_outcomes(&self, qr: QuantumResult) {
-        if qr.results.is_empty() {
+    pub fn analyze(&self, rr: RunResult) {
+        if rr.classical_bit.is_empty() {
             println!("\nNo results to count.");
             return;
         }
@@ -198,8 +224,8 @@ impl QuantumCircuit {
         let num_classical_bits = self.measurements.len();
 
         // Collect all outcomes using parallel processing
-        let counts: HashMap<String, usize> = qr
-            .results
+        let counts: HashMap<String, usize> = rr
+            .classical_bit
             .par_iter()
             .map(|classical_register| {
                 classical_register
@@ -232,7 +258,7 @@ impl QuantumCircuit {
         });
 
         println!("\n{:=<65}", "");
-        println!("MEASUREMENT RESULTS FROM {} SHOTS", qr.shots);
+        println!("MEASUREMENT RESULTS FROM {} SHOTS", rr.shots);
         println!("{:=<65}", "");
 
         // Individual qubit statistics (parallel processing)
@@ -243,8 +269,8 @@ impl QuantumCircuit {
             let qubit_stats: Vec<(usize, usize, usize)> = (0..num_classical_bits)
                 .into_par_iter()
                 .map(|bit_idx| {
-                    let (zeros, ones) = qr
-                        .results
+                    let (zeros, ones) = rr
+                        .classical_bit
                         .par_iter()
                         .map(|result| if result[bit_idx] { (0, 1) } else { (1, 0) })
                         .reduce(|| (0, 0), |a, b| (a.0 + b.0, a.1 + b.1));
@@ -265,12 +291,12 @@ impl QuantumCircuit {
                 println!(
                     "  |0⟩: {:5} ({:5.2}%)",
                     zeros,
-                    (zeros as f64 / qr.shots as f64) * 100.0
+                    (zeros as f64 / rr.shots as f64) * 100.0
                 );
                 println!(
                     "  |1⟩: {:5} ({:5.2}%)",
                     ones,
-                    (ones as f64 / qr.shots as f64) * 100.0
+                    (ones as f64 / rr.shots as f64) * 100.0
                 );
                 println!();
             }
@@ -285,7 +311,7 @@ impl QuantumCircuit {
         );
         println!("{:-<65}", "");
 
-        let total_shots = qr.shots as f64;
+        let total_shots = rr.shots as f64;
         let mut total_probability = 0.0;
 
         for (outcome, count) in &sorted_outcomes {
@@ -360,12 +386,18 @@ impl QuantumCircuit {
 
         println!("{:=<60}", "");
     }
+
     /// Get the current quantum state
     pub fn state_vector(&self, filter_zero: bool) -> Vec<String> {
         println!("\nVector state: ");
-        for state_str in self.current_state.get_state(filter_zero) {
+        for state_str in self.current_state.get_amp_state(filter_zero) {
             println!("{}", state_str);
         }
-        self.current_state.get_state(filter_zero)
+        self.current_state.get_amp_state(filter_zero)
+    }
+
+    /// Get the quantum state from specified qubit
+    pub fn state_qubit(&self, qubit: Qubit) -> QubitState {
+        self.current_state.get_qubit_state(qubit)
     }
 }

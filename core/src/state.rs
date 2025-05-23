@@ -16,7 +16,8 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::constant::{C_ONE, C_ZERO, EPSILON};
-use crate::types::{Complex, Vector};
+use crate::prelude::QubitState;
+use crate::types::{Complex, Qubit, Vector};
 use rand::Rng;
 
 #[derive(Clone)]
@@ -198,7 +199,7 @@ impl QuantumState {
     }
 
     /// Return the quantum state as formatted strings.
-    pub fn get_state(&self, filter_zero: bool) -> Vec<String> {
+    pub fn get_amp_state(&self, filter_zero: bool) -> Vec<String> {
         let num_qubits = self.num_qubits();
         self.amplitudes
             .iter()
@@ -215,9 +216,66 @@ impl QuantumState {
                 let bin = format!("{:0width$b}", i, width = num_qubits);
                 format!(
                     "[{}] |{}⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
-                    i, bin, amp.re, amp.im, prob, prob * 100.0
+                    i,
+                    bin,
+                    amp.re,
+                    amp.im,
+                    prob,
+                    prob * 100.0
                 )
             })
             .collect()
+    }
+
+    /// Get specific state of a qubit
+    pub fn get_qubit_state(&self, qubit: Qubit) -> QubitState {
+        let num_qubits = self.num_qubits();
+
+        if qubit >= num_qubits {
+            panic!(
+                "\nError: Qubit index {} out of range. System has {} qubits.",
+                qubit, num_qubits
+            );
+        }
+
+        println!("\nQubit {} state:", qubit);
+
+        // Calculate marginal amplitudes for |0⟩ and |1⟩
+        let mut amp_0 = Complex::new(0.0, 0.0);
+        let mut amp_1 = Complex::new(0.0, 0.0);
+
+        for (i, amp) in self.amplitudes.iter().enumerate() {
+            let qubit_bit = (i >> qubit) & 1;
+            if qubit_bit == 0 {
+                amp_0 += amp;
+            } else {
+                amp_1 += amp;
+            }
+        }
+
+        let prob_0 = amp_0.norm_sqr();
+        let prob_1 = amp_1.norm_sqr();
+
+        println!(
+            "|0⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
+            amp_0.re,
+            amp_0.im,
+            prob_0,
+            prob_0 * 100.0
+        );
+        println!(
+            "|1⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
+            amp_1.re,
+            amp_1.im,
+            prob_1,
+            prob_1 * 100.0
+        );
+
+        QubitState {
+            amp_0,
+            amp_1,
+            prob_0,
+            prob_1,
+        }
     }
 }
