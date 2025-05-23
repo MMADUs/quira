@@ -20,12 +20,18 @@ use std::time::Instant;
 
 use crate::{
     constant::{C_ONE, C_ZERO},
+    endian::QubitIndexing,
     operations::QuantumGate,
     state::QuantumState,
     types::{Complex, Qubit, Vector},
 };
 
 use rayon::prelude::*;
+
+pub struct QuantumResult {
+    results: Vec<Vec<bool>>,
+    shots: usize,
+}
 
 pub struct QuantumCircuit {
     /// state vector for the final quantum state outcome
@@ -38,17 +44,20 @@ pub struct QuantumCircuit {
     measurements: HashMap<usize, usize>,
     /// toggle if operation directly applied to state
     direct_apply: bool,
+    /// qubit indexing when applying to quantum state
+    qubit_indexing: QubitIndexing,
 }
 
 impl QuantumCircuit {
     /// Create a new quantum circuit.
-    pub fn new(update_flag: bool) -> Self {
+    pub fn new(update_flag: bool, indexing: QubitIndexing) -> Self {
         Self {
             base_state: QuantumState::new(),
             current_state: QuantumState::new(),
             gates: Vec::new(),
             measurements: HashMap::new(),
             direct_apply: update_flag,
+            qubit_indexing: indexing,
         }
     }
 
@@ -109,7 +118,7 @@ impl QuantumCircuit {
         O: QuantumGate + 'static,
     {
         if self.direct_apply {
-            operation.apply(&mut self.current_state);
+            operation.apply(&mut self.current_state, &self.qubit_indexing);
         }
         self.gates.push(Box::new(operation));
         self
@@ -125,16 +134,19 @@ impl QuantumCircuit {
     }
 
     /// Execute the circuit and return the measurement counts and probabilities.
-    pub fn execute(&self, shots: usize) -> (HashMap<String, usize>, HashMap<String, f64>) {
+    pub fn execute(&self, shots: usize) -> QuantumResult {
         let start_time = Instant::now();
-
         println!("Executing quantum circuit with {} shot(s)...", shots);
-        println!("\nInitial state: ");
-        for state_str in self.state() {
-            println!("{}", state_str);
+
+        // early return if no measurements
+        if self.measurements.is_empty() {
+            println!("Warning: No measurements defined in the circuit. Skipping measurements.");
+            println!("\nExecution completed in: {:.3?}", start_time.elapsed());
+            return QuantumResult {
+                results: Vec::new(),
+                shots: 0,
+            };
         }
-        println!("\nTotal Gates to apply: {}", self.gates.len());
-        println!("Measurements: {:?}", self.measurements);
 
         // Run shots in parallel
         let results: Vec<Vec<bool>> = (0..shots)
@@ -143,7 +155,7 @@ impl QuantumCircuit {
                 let mut state = self.base_state.clone();
 
                 for (_i, gate) in self.gates.iter().enumerate() {
-                    gate.apply(&mut state);
+                    gate.apply(&mut state, &self.qubit_indexing);
                 }
 
                 let num_qubits = self.num_qubits();
@@ -166,64 +178,187 @@ impl QuantumCircuit {
 
         let duration = start_time.elapsed();
         println!("\nExecution completed in: {:.3?}", duration);
+        QuantumResult { results, shots }
+    }
 
-        // Count outcomes
-        let mut counts: HashMap<String, usize> = HashMap::new();
-
-        for classical_register in &results {
-            let bit_string = classical_register
-                .iter()
-                .rev()
-                .map(|b| if *b { '1' } else { '0' })
-                .collect::<String>();
-            *counts.entry(bit_string).or_insert(0) += 1;
+    /// Count all the statistical outcome after execution with enhanced formatting and analysis
+    pub fn count_outcomes(&self, qr: QuantumResult) {
+        if qr.results.is_empty() {
+            println!("No results to count.");
+            return;
         }
 
-        // Count |0⟩ and |1⟩ for first bit
-        let mut zeros = 0;
-        let mut ones = 0;
-        for result in &results {
-            if result[0] {
-                ones += 1;
-            } else {
-                zeros += 1;
+        let num_classical_bits = self.measurements.len();
+
+        // Collect all outcomes using parallel processing
+        let counts: HashMap<String, usize> = qr
+            .results
+            .par_iter()
+            .map(|classical_register| {
+                classical_register
+                    .iter()
+                    .rev()
+                    .map(|b| if *b { '1' } else { '0' })
+                    .collect::<String>()
+            })
+            .fold(
+                HashMap::new,
+                |mut acc: HashMap<String, usize>, bit_string| {
+                    *acc.entry(bit_string).or_insert(0) += 1;
+                    acc
+                },
+            )
+            .reduce(HashMap::new, |mut acc, map| {
+                for (key, value) in map {
+                    *acc.entry(key).or_insert(0) += value;
+                }
+                acc
+            });
+
+        // Sort outcomes by binary value for better readability
+        let mut sorted_outcomes: Vec<(String, usize)> = counts.into_iter().collect();
+        sorted_outcomes.sort_by(|a, b| {
+            // Sort by binary value (convert string to number)
+            let a_val = usize::from_str_radix(&a.0, 2).unwrap_or(0);
+            let b_val = usize::from_str_radix(&b.0, 2).unwrap_or(0);
+            a_val.cmp(&b_val)
+        });
+
+        println!("\n{:=<60}", "");
+        println!("MEASUREMENT RESULTS FROM {} SHOTS", qr.shots);
+        println!("{:=<65}", "");
+
+        // Individual qubit statistics (parallel processing)
+        if num_classical_bits > 1 {
+            println!("\nPer-Qubit Statistics:");
+            println!("{:-<40}", "");
+
+            let qubit_stats: Vec<(usize, usize, usize)> = (0..num_classical_bits)
+                .into_par_iter()
+                .map(|bit_idx| {
+                    let (zeros, ones) = qr
+                        .results
+                        .par_iter()
+                        .map(|result| if result[bit_idx] { (0, 1) } else { (1, 0) })
+                        .reduce(|| (0, 0), |a, b| (a.0 + b.0, a.1 + b.1));
+                    (bit_idx, zeros, ones)
+                })
+                .collect();
+
+            for (bit_idx, zeros, ones) in qubit_stats {
+                // Find which qubit this classical bit corresponds to
+                let qubit_idx = self
+                    .measurements
+                    .iter()
+                    .find(|(_, classical_bit)| **classical_bit == bit_idx)
+                    .map(|(&qubit, _)| qubit)
+                    .unwrap_or(bit_idx);
+
+                println!("Qubit {} (classical bit {}):", qubit_idx, bit_idx);
+                println!(
+                    "  |0⟩: {:5} ({:5.2}%)",
+                    zeros,
+                    (zeros as f64 / qr.shots as f64) * 100.0
+                );
+                println!(
+                    "  |1⟩: {:5} ({:5.2}%)",
+                    ones,
+                    (ones as f64 / qr.shots as f64) * 100.0
+                );
+                println!();
             }
         }
 
-        println!("\nMeasurement results from {} iterations:", shots);
+        // Overall outcome distribution
+        println!("Complete State Measurements:");
+        println!("{:-<65}", "");
         println!(
-            "Measured |0⟩: {} times ({:.2}%)",
-            zeros,
-            (zeros as f64 / shots as f64) * 100.0
+            "{:>12} | {:>8} | {:>8} | {:>8}",
+            "State", "Count", "Percent", "Probability"
         );
-        println!(
-            "Measured |1⟩: {} times ({:.2}%)",
-            ones,
-            (ones as f64 / shots as f64) * 100.0
-        );
+        println!("{:-<65}", "");
 
-        // Compute probabilities
-        let total = shots as f64;
-        let probabilities = counts
-            .iter()
-            .map(|(k, v)| (k.clone(), *v as f64 / total))
-            .collect::<HashMap<_, _>>();
+        let total_shots = qr.shots as f64;
+        let mut total_probability = 0.0;
 
-        println!("\nFinal counts:");
-        for (outcome, count) in &counts {
-            println!("  {} => {}", outcome, count);
+        for (outcome, count) in &sorted_outcomes {
+            let percentage = (*count as f64 / total_shots) * 100.0;
+            let probability = *count as f64 / total_shots;
+            total_probability += probability;
+
+            println!(
+                "{:>8} | {:>8} | {:>7.2}% | {:>8.4}",
+                outcome, count, percentage, probability
+            );
         }
 
-        println!("\nFinal probabilities:");
-        for (outcome, prob) in &probabilities {
-            println!("  {} => {:.4}", outcome, prob);
+        println!("{:-<65}", "");
+        println!(
+            "Total probability: {:.6} (should be ~1.0)",
+            total_probability
+        );
+
+        // Statistical analysis
+        println!("\nStatistical Analysis:");
+        println!("{:-<40}", "");
+
+        let expected_count = total_shots / (1 << num_classical_bits) as f64;
+        let expected_probability = 1.0 / (1 << num_classical_bits) as f64;
+
+        println!("Expected count per state: {:.1}", expected_count);
+        println!(
+            "Expected probability per state: {:.4}",
+            expected_probability
+        );
+
+        // Calculate chi-squared goodness of fit
+        let mut chi_squared = 0.0;
+        let mut max_deviation = 0.0;
+        let mut max_deviation_state = String::new();
+
+        for (outcome, count) in &sorted_outcomes {
+            let observed = *count as f64;
+            let deviation = (observed - expected_count).abs();
+            let chi_contribution = (observed - expected_count).powi(2) / expected_count;
+            chi_squared += chi_contribution;
+
+            if deviation > max_deviation {
+                max_deviation = deviation;
+                max_deviation_state = outcome.clone();
+            }
         }
 
-        (counts, probabilities)
+        println!("Chi-squared statistic: {:.4}", chi_squared);
+        println!(
+            "Largest deviation: {:.1} counts (state {})",
+            max_deviation, max_deviation_state
+        );
+
+        // Entropy calculation (parallel)
+        let entropy = -sorted_outcomes
+            .par_iter()
+            .map(|(_, count)| {
+                let p = *count as f64 / total_shots;
+                if p > 0.0 { p * p.log2() } else { 0.0 }
+            })
+            .sum::<f64>();
+
+        let max_entropy = (num_classical_bits as f64).log2();
+        println!("Shannon entropy: {:.4} bits", entropy);
+        println!("Maximum entropy: {:.4} bits", max_entropy);
+        println!(
+            "Entropy ratio: {:.4} (1.0 = maximum randomness)",
+            entropy / max_entropy
+        );
+
+        println!("{:=<60}", "");
     }
-
     /// Get the current quantum state
-    pub fn state(&self) -> Vec<String> {
+    pub fn state_vector(&self) -> Vec<String> {
+        println!("\nVector state: ");
+        for state_str in self.current_state.get_state() {
+            println!("{}", state_str);
+        }
         self.current_state.get_state()
     }
 }

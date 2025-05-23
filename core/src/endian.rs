@@ -17,6 +17,13 @@
 
 use crate::types::{Complex, Matrix};
 
+/// Qubit index ordering mode when applying unitary to quantum state.
+#[derive(Debug, Clone)]
+pub enum QubitIndexing {
+    LittleEndian,
+    BigEndian,
+}
+
 /// Computes the Kronecker product of two square matrices a and b.
 /// Both matrices must be square of any dimension.
 /// Returns a matrix of size (a_dim * b_dim) x (a_dim * b_dim).
@@ -77,30 +84,43 @@ pub(crate) fn permutation_matrix(n: usize, targets: &[usize]) -> Matrix<Complex>
     p
 }
 
-/// Embeds a k-qubit gate g into an n-qubit Hilbert space,
+/// Expanding a k-qubit unitary into an n-qubit quantum state (Hilbert space),
 /// acting on the qubits specified in targets.
-/// Returns the full 2^n x 2^n unitary matrix.
-pub(crate) fn embed_gate(n: usize, targets: &[usize], g: &Matrix<Complex>) -> Matrix<Complex> {
+///
+/// Let:
+/// - n = total number of qubits
+/// - k = number of qubits that the gate U acts on
+/// - U = 2^k x 2^k unitary matrix
+/// - I = identity matrix of size 2^(n-k) x 2^(n-k)
+/// - P = permutation matrix that moves target qubits to the front (lowest bits)
+/// - P† = the conjugate transpose (inverse) of P.
+///
+/// Then the expanded operator is:
+///
+/// For BigEndian indexing:
+///     U_expanded = P† * ( U ⊗ I ⊗ ... ⊗ I ) * P
+///
+/// For LittleEndian indexing:
+///     U_expanded = P† * ( I ⊗ ... ⊗ I ⊗ U ) * P
+///
+pub(crate) fn expand_unitary(
+    n: usize,
+    targets: &[usize],
+    u: &Matrix<Complex>,
+    indexing: &QubitIndexing,
+) -> Matrix<Complex> {
     let k = targets.len();
-    assert_eq!(
-        g.shape(),
-        &[1 << k, 1 << k],
-        "Gate dimension must be 2^k x 2^k"
-    );
+    assert_eq!(u.shape(), &[1 << k, 1 << k], "Unitary must be 2^k x 2^k");
 
-    // IBM qubit 0 is the MSB, so reverse the indices
-    fn reverse_indices(n: usize, indices: &[usize]) -> Vec<usize> {
-        indices.iter().map(|&i| n - 1 - i).collect()
-    }
-
-    let ibm_targets = reverse_indices(n, targets);
-    let p = permutation_matrix(n, &ibm_targets);
+    let p = permutation_matrix(n, &targets);
     let p_inv = p.t().mapv(|c| c.conj()).to_owned();
 
-    let id = Matrix::<Complex>::eye(1 << (n - k));
-    let g_kron = kronecker_product(&g, &id);
+    let i = Matrix::<Complex>::eye(1 << (n - k));
 
-    p_inv.dot(&g_kron).dot(&p)
+    let u_kron = match indexing {
+        QubitIndexing::BigEndian => kronecker_product(&u, &i),
+        QubitIndexing::LittleEndian => kronecker_product(&i, &u),
+    };
+
+    p_inv.dot(&u_kron).dot(&p)
 }
-
-// NOTE: remove reverse_indices and swap kroneker to make the order same as ibm composer
