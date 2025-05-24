@@ -63,23 +63,22 @@ fn main() {
     // [6] |110⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
     // [7] |111⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
 
-    let m0 = qc.measure(phi, 0); // measure phi to classical reg 0
-    let m1 = qc.measure(q0, 1); // measure Alice's qubit to classical reg 1
+    let m0: Option<bool> = qc.measure(phi, 0); // measure phi to classical reg 0
+    let m1: Option<bool> = qc.measure(q0, 1); // measure Alice's qubit to classical reg 1
 
-    qc.state_vector(true);
-    // [2] |010⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
-    // [6] |110⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
+    println!("m0 = {}, m1 = {}", m0.unwrap() as u8, m1.unwrap() as u8); // -> superposition outcome
 
-    // apply conditional measurement
+    qc.state_vector(true); // -> superposition state before teleportaion
+
+    // apply conditional measurement for teleportation
     // if any of the measurement is |1>, it applies the gate.
-    qc.cond_add(m0, X::new(q1)); // -> if Alice measured |1>, Bob applies Pauli X
-    qc.cond_add(m1, Z::new(q1)); // -> if Bob measured |1>, Alice applies Pauli Z
+    qc.cond_add(m0.unwrap(), X::new(q1)); // -> if Alice measured |1>, Bob applies Pauli X
+    qc.cond_add(m1.unwrap(), Z::new(q1)); // -> if Bob measured |1>, Alice applies Pauli Z
 
-    println!("m0 = {}, m1 = {}", m0, m1); // -> superposition outcome
-
-    qc.state_vector(true); // -> state is either Bob or Alice
+    qc.state_vector(true); // -> superposition state after teleportation
 
     qc.state_qubit(q1); // -> verify, now phi state should be teleported to Bob's qubit state
+    qc.state_qubit(q0); // -> verify, now Alice's qubit has collapse
 
     let shots: usize = 10000;
     let result: RR = qc.run(shots); // -> run cirucit for N shots

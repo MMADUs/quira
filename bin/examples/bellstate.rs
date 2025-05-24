@@ -33,10 +33,10 @@ fn main() {
     // [0] |00⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
     // [3] |11⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
 
-    let m0: bool = qc.measure(q0, 0); // -> measure q0 to classical reg 0
-    let m1: bool = qc.measure(q1, 1); // -> measure q1 to classical reg 1
+    let m0: Option<bool> = qc.measure(q0, 0); // -> measure q0 to classical reg 0
+    let m1: Option<bool> = qc.measure(q1, 1); // -> measure q1 to classical reg 1
 
-    println!("m0 = {}, m1 = {}", m0, m1); // -> superposition outcome
+    println!("m0 = {}, m1 = {}", m0.unwrap() as u8, m1.unwrap() as u8); // -> superposition outcome
 
     let shots: usize = 10000;
     let result: RR = qc.run(shots); // -> run circuit for N shots

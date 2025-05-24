@@ -22,25 +22,30 @@ use crate::{
     constant::{C_ONE, C_ZERO, EPSILON},
     endian::QubitIndexing,
     operations::QuantumGate,
+    prelude::{QubitState, RunResult},
     state::QuantumState,
     types::{Complex, Qubit, Vector},
-    prelude::{RunResult, QubitState},
 };
 
 use rayon::prelude::*;
 
 pub struct QuantumCircuit {
-    /// state vector for the final quantum state outcome
+    /// state vector for the final quantum state outcome.
     base_state: QuantumState,
     /// state vector that represent the current quantum state
+    /// the state will directly updated if 'direct_apply' is enabled.
     current_state: QuantumState,
-    /// applied quantum circuit gates
+    /// applied quantum circuit gates.
     gates: Vec<Box<dyn QuantumGate>>,
-    /// map of measurements (qubit_index -> classical_bit_index)
-    measurements: HashMap<usize, usize>,
-    /// toggle if operation directly applied to state
+    /// map of Measurements.
+    /// (qubit -> classical_bit)
+    measurements: HashMap<Qubit, usize>,
+    /// a measurement result of the current quantum state
+    /// measurement will directly updated if 'direct_apply' is enabled.
+    measured_state: HashMap<Qubit, bool>,
+    /// toggle if operation should be directly applied to 'current_state'.
     direct_apply: bool,
-    /// qubit indexing when applying to quantum state
+    /// qubit indexing when applying to quantum state.
     qubit_indexing: QubitIndexing,
 }
 
@@ -52,6 +57,7 @@ impl QuantumCircuit {
             current_state: QuantumState::new(),
             gates: Vec::new(),
             measurements: HashMap::new(),
+            measured_state: HashMap::new(),
             direct_apply: update_flag,
             qubit_indexing: indexing,
         }
@@ -158,12 +164,42 @@ impl QuantumCircuit {
     }
 
     /// Add a measurement operation at the end of circuit.
-    pub fn measure(&mut self, qubit: usize, classical_bit: usize) -> bool {
+    pub fn measure(&mut self, qubit: Qubit, classical_bit: usize) -> Option<bool> {
         if qubit > self.current_state.num_qubits() {
             panic!("Qubit index out of range");
         }
         self.measurements.insert(qubit, classical_bit);
-        self.current_state.measure_qubit(qubit)
+        // check if direct apply
+        if self.direct_apply {
+            let bit = self.current_state.measure_qubit(qubit);
+            self.measured_state.insert(qubit, bit);
+            Some(bit)
+        } else {
+            None
+        }
+    }
+
+    /// Get the current quantum state
+    pub fn state_vector(&self, filter_zero: bool) -> Vec<String> {
+        println!("\nVector state: ");
+        for state_str in self.current_state.get_amp_state(filter_zero) {
+            println!("{}", state_str);
+        }
+        self.current_state.get_amp_state(filter_zero)
+    }
+
+    /// Get the quantum state from specified qubit
+    pub fn state_qubit(&self, qubit: Qubit) -> Option<QubitState> {
+        if let Some(&measured_bit) = self.measured_state.get(&qubit) {
+            println!("\nQubit {} state:", qubit);
+            println!(
+                "Qubit {} already collapsed to classical bit: {}",
+                qubit, measured_bit as u8
+            );
+            return None;
+        }
+        let state = self.current_state.get_qubit_state(qubit);
+        Some(state)
     }
 
     /// Execute the circuit and return the measurement counts and probabilities.
@@ -211,7 +247,10 @@ impl QuantumCircuit {
 
         let duration = start_time.elapsed();
         println!("\nExecution completed in: {:.3?}", duration);
-        RunResult { classical_bit: results, shots }
+        RunResult {
+            classical_bit: results,
+            shots,
+        }
     }
 
     /// Count all the statistical outcome after execution with enhanced formatting and analysis
@@ -385,19 +424,5 @@ impl QuantumCircuit {
         );
 
         println!("{:=<60}", "");
-    }
-
-    /// Get the current quantum state
-    pub fn state_vector(&self, filter_zero: bool) -> Vec<String> {
-        println!("\nVector state: ");
-        for state_str in self.current_state.get_amp_state(filter_zero) {
-            println!("{}", state_str);
-        }
-        self.current_state.get_amp_state(filter_zero)
-    }
-
-    /// Get the quantum state from specified qubit
-    pub fn state_qubit(&self, qubit: Qubit) -> QubitState {
-        self.current_state.get_qubit_state(qubit)
     }
 }
