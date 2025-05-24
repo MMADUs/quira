@@ -31,6 +31,7 @@ pub use prelude::*;
 pub mod state;
 
 pub mod types;
+pub use types::*;
 
 pub mod endian;
 pub use endian::*;
