@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::{SingleQubit, SingleQubitGate};
+use super::SingleQubitGate;
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
@@ -35,12 +35,12 @@ use ndarray::array;
 /// This gate leaves the quantum state completely unchanged. It's useful in quantum algorithms,
 /// error correction, and circuit design for padding or alignment purposes.
 pub struct Identity {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl Identity {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -55,19 +55,12 @@ impl QuantumGate for Identity {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("I")
+        format!("I(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for Identity {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 

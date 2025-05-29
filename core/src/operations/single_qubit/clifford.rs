@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::{SingleQubit, SingleQubitGate};
+use super::SingleQubitGate;
 use crate::constant::PI;
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
@@ -32,12 +32,12 @@ use ndarray::array;
 /// X = [ [ 0, 1 ],
 ///       [ 1, 0 ] ]
 pub struct PauliX {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl PauliX {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -52,19 +52,12 @@ impl QuantumGate for PauliX {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("X")
+        format!("X(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for PauliX {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -106,12 +99,12 @@ impl SingleQubitGate for PauliX {
 /// Y = [ [ 0, -i ],
 ///       [ i,  0 ] ]
 pub struct PauliY {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl PauliY {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -126,19 +119,12 @@ impl QuantumGate for PauliY {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Y")
+        format!("Y(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for PauliY {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -180,12 +166,12 @@ impl SingleQubitGate for PauliY {
 /// Z = [ [ 1,  0 ],
 ///       [ 0, -1 ] ]
 pub struct PauliZ {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl PauliZ {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -200,19 +186,12 @@ impl QuantumGate for PauliZ {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Z")
+        format!("Z(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for PauliZ {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -256,12 +235,12 @@ impl SingleQubitGate for PauliZ {
 ///
 /// Applying this gate twice is equivalent to applying the X gate once.
 pub struct SqrtPauliX {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl SqrtPauliX {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -279,19 +258,12 @@ impl QuantumGate for SqrtPauliX {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Sqrt-X")
+        format!("Sqrt-X(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for SqrtPauliX {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -333,12 +305,12 @@ impl SingleQubitGate for SqrtPauliX {
 /// Applying this gate twice is equivalent to applying the X gate once,
 /// and applying it after the √X gate results in the identity gate.
 pub struct InvSqrtPauliX {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl InvSqrtPauliX {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -356,19 +328,12 @@ impl QuantumGate for InvSqrtPauliX {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Inv-Sqrt-X")
+        format!("Inv-Sqrt-X(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for InvSqrtPauliX {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -407,12 +372,12 @@ impl SingleQubitGate for InvSqrtPauliX {
 ///
 /// Applying this gate twice is equivalent to applying the Y gate once.
 pub struct SqrtPauliY {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl SqrtPauliY {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -430,19 +395,12 @@ impl QuantumGate for SqrtPauliY {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Sqrt-Y")
+        format!("Sqrt-Y(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for SqrtPauliY {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -484,12 +442,12 @@ impl SingleQubitGate for SqrtPauliY {
 /// Applying this gate twice is equivalent to applying the Y gate once,
 /// and applying it after the √Y gate results in the identity gate.
 pub struct InvSqrtPauliY {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl InvSqrtPauliY {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -507,19 +465,12 @@ impl QuantumGate for InvSqrtPauliY {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Inv-Sqrt-Y")
+        format!("Inv-Sqrt-Y(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for InvSqrtPauliY {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -563,12 +514,12 @@ impl SingleQubitGate for InvSqrtPauliY {
 ///
 /// The Hadamard gate is self-inverse: applying it twice results in the identity.
 pub struct Hadamard {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl Hadamard {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -584,19 +535,12 @@ impl QuantumGate for Hadamard {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("H")
+        format!("H(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for Hadamard {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -640,12 +584,12 @@ impl SingleQubitGate for Hadamard {
 ///
 /// Applying this gate twice is equivalent to applying the Z gate once.
 pub struct SGate {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl SGate {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -660,19 +604,12 @@ impl QuantumGate for SGate {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("S")
+        format!("S(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for SGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -716,12 +653,12 @@ impl SingleQubitGate for SGate {
 ///
 /// Applying this gate after the S gate results in the identity gate.
 pub struct InvSGate {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl InvSGate {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -736,19 +673,12 @@ impl QuantumGate for InvSGate {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Inv-S")
+        format!("Inv-S(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for InvSGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -792,12 +722,12 @@ impl SingleQubitGate for InvSGate {
 /// This gate is equivalent to e^(i*π/4) * RX(π/2) where RX is the rotation around X-axis.
 /// It maps |0⟩ to (|0⟩ + i|1⟩)/√2 and |1⟩ to (i|0⟩ + |1⟩)/√2.
 pub struct SXGate {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl SXGate {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -816,19 +746,12 @@ impl QuantumGate for SXGate {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("SX")
+        format!("SX(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for SXGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -871,12 +794,12 @@ impl SingleQubitGate for SXGate {
 ///
 /// This gate is equivalent to e^(i*π/4) * RX(-π/2) where RX is the rotation around X-axis.
 pub struct InvSXGate {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl InvSXGate {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -895,21 +818,13 @@ impl QuantumGate for InvSXGate {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Inv-SX")
+        format!("Inv-SX(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
+        vec![self.target]
     }
-}
-
-impl SingleQubit for InvSXGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
-    }
-
 }
 
 impl SingleQubitGate for InvSXGate {

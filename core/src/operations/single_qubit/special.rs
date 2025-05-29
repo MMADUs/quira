@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::{SingleQubit, SingleQubitGate};
+use super::SingleQubitGate;
 use crate::constant::PI;
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
@@ -34,13 +34,13 @@ use ndarray::array;
 ///
 /// When θ=0, this becomes equivalent to the Pauli-X gate.
 pub struct GPi {
-    qubit: Qubit,
+    target: Qubit,
     theta: f64,
 }
 
 impl GPi {
-    pub fn new(qubit: Qubit, theta: f64) -> Self {
-        Self { qubit, theta }
+    pub fn new(target: Qubit, theta: f64) -> Self {
+        Self { target, theta }
     }
 }
 
@@ -57,19 +57,12 @@ impl QuantumGate for GPi {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        format!("GPi({:.4})", self.theta)
+        format!("GPi(target={}, theta={:.4})", self.target, self.theta)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for GPi {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -113,13 +106,13 @@ impl SingleQubitGate for GPi {
 ///
 /// When θ=0, this is equivalent to a 90-degree rotation around the X-axis (√X gate without the global phase).
 pub struct GPi2 {
-    qubit: Qubit,
+    target: Qubit,
     theta: f64,
 }
 
 impl GPi2 {
-    pub fn new(qubit: Qubit, theta: f64) -> Self {
-        Self { qubit, theta }
+    pub fn new(target: Qubit, theta: f64) -> Self {
+        Self { target, theta }
     }
 }
 
@@ -136,19 +129,12 @@ impl QuantumGate for GPi2 {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        format!("GPi2({:.4})", self.theta)
+        format!("GPi2(target={}, theta={:.4})", self.target, self.theta)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for GPi2 {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 

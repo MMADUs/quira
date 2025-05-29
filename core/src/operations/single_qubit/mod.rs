@@ -33,16 +33,6 @@ pub use trivial::*;
 pub mod universal;
 pub use universal::*;
 
-use crate::types::Qubit;
-
-use super::QuantumGate;
-
-/// single qubit operation.
-pub trait SingleQubit: QuantumGate + Send + Sync {
-    /// the qubit index the operation acts on.
-    fn target_qubit(&self) -> Qubit;
-}
-
 /// single qubit gate operation.
 pub trait SingleQubitGate: Send + Sync {
     /// alpha real Re(α) of the on-diagonal elements of the unitary matrix.

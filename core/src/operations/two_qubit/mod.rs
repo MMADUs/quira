@@ -45,20 +45,6 @@ pub struct KakDecomposition {
     pub u_after: Vec<Box<dyn QuantumGate>>,
 }
 
-/// two qubit operation.
-pub trait TwoQubit: QuantumGate + Send + Sync {
-    /// return the target qubit index the operation acts on.
-    fn target_qubit(&self) -> Qubit;
-
-    /// return the control qubit index the operation acts on.
-    fn control_qubit(&self) -> Qubit;
-}
-
-/// two qubit gate operation.
-pub trait TwoQubitGate: Send + Sync {
-    fn kak_decomposition(&self) -> KakDecomposition;
-}
-
 pub enum TwoQubitOperation {
     // clifford
     CNOT,

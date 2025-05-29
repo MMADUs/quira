@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::{SingleQubit, SingleQubitGate};
+use super::SingleQubitGate;
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
 use ndarray::array;
@@ -34,7 +34,7 @@ use ndarray::array;
 /// where α* and β* are complex conjugates of α and β respectively.
 /// The parameters must satisfy |α|² + |β|² = 1 to ensure unitarity.
 pub struct Arbitrary {
-    qubit: Qubit,
+    target: Qubit,
     alpha_re: f64,
     alpha_im: f64,
     beta_re: f64,
@@ -44,7 +44,7 @@ pub struct Arbitrary {
 
 impl Arbitrary {
     pub fn new(
-        qubit: Qubit,
+        target: Qubit,
         alpha_re: f64,
         alpha_im: f64,
         beta_re: f64,
@@ -69,7 +69,7 @@ impl Arbitrary {
         }
 
         Self {
-            qubit,
+            target,
             alpha_re,
             alpha_im,
             beta_re,
@@ -98,19 +98,17 @@ impl QuantumGate for Arbitrary {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("AR")
+        let alpha = Complex::new(self.alpha_re, self.alpha_im);
+        let beta = Complex::new(self.beta_re, self.beta_im);
+        format!(
+            "AR(target={}, alpha={}, beta={}, global_phase={})",
+            self.target, alpha, beta, self.global_phase
+        )
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for Arbitrary {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -164,16 +162,16 @@ impl SingleQubitGate for Arbitrary {
 /// - U(0,0,π/2) = S (Phase gate)
 /// - U(0,0,π/4) = T (π/8 gate)
 pub struct UGate {
-    qubit: Qubit,
+    target: Qubit,
     theta: f64,
     phi: f64,
     lambda: f64,
 }
 
 impl UGate {
-    pub fn new(qubit: Qubit, theta: f64, phi: f64, lambda: f64) -> Self {
+    pub fn new(target: Qubit, theta: f64, phi: f64, lambda: f64) -> Self {
         Self {
-            qubit,
+            target,
             theta,
             phi,
             lambda,
@@ -203,19 +201,15 @@ impl QuantumGate for UGate {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        format!("U({:.4}, {:.4}, {:.4})", self.theta, self.phi, self.lambda)
+        format!(
+            "U(target={}, theta={:.4}, phi={:.4}, lambda={:.4})",
+            self.target, self.theta, self.phi, self.lambda
+        )
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for UGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 

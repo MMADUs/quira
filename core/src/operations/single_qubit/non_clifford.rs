@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::{SingleQubit, SingleQubitGate};
+use super::SingleQubitGate;
 use crate::constant::PI;
 use crate::operations::QuantumGate;
 use crate::types::{Complex, Matrix, Qubit};
@@ -42,12 +42,12 @@ use ndarray::array;
 /// to achieve universal quantum computation. It's also known as the π/8 gate
 /// (because its effect is a rotation of π/4 which is π/8 radians).
 pub struct TGate {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl TGate {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -65,19 +65,12 @@ impl QuantumGate for TGate {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("T")
+        format!("T(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for TGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 
@@ -128,12 +121,12 @@ impl SingleQubitGate for TGate {
 /// The T† gate is used to undo the effect of the T gate and is also an important
 /// component in many quantum algorithms and error correction protocols.
 pub struct InvTGate {
-    qubit: Qubit,
+    target: Qubit,
 }
 
 impl InvTGate {
-    pub fn new(qubit: Qubit) -> Self {
-        Self { qubit }
+    pub fn new(target: Qubit) -> Self {
+        Self { target }
     }
 }
 
@@ -151,19 +144,12 @@ impl QuantumGate for InvTGate {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        String::from("Inv-T")
+        format!("Inv-T(target={})", self.target)
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit()]
-    }
-}
-
-impl SingleQubit for InvTGate {
-    /// returns the index of the qubit this gate operates on.
-    fn target_qubit(&self) -> Qubit {
-        self.qubit
+        vec![self.target]
     }
 }
 

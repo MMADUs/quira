@@ -22,8 +22,7 @@ use crate::{
 
 use ndarray::array;
 
-use super::TwoQubit;
-
+#[derive(Debug, Clone)]
 pub struct ControlledNot {
     control: Qubit,
     target: Qubit,
@@ -70,16 +69,314 @@ impl QuantumGate for ControlledNot {
     }
 
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target_qubit(), self.control_qubit()]
+        vec![self.target, self.control]
     }
 }
 
-impl TwoQubit for ControlledNot {
-    fn target_qubit(&self) -> Qubit {
-        self.target
+#[derive(Debug, Clone)]
+pub struct SWAP {
+    control: Qubit,
+    target: Qubit,
+}
+
+impl SWAP {
+    pub fn new(control: Qubit, target: Qubit) -> Self {
+        Self { control, target }
+    }
+}
+
+impl QuantumGate for SWAP {
+    fn unitary_matrix(&self) -> Matrix<Complex> {
+        array![
+            [
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+            ]
+        ]
     }
 
-    fn control_qubit(&self) -> Qubit {
-        self.control
+    fn name(&self) -> String {
+        format!("SWAP(control={}, target={})", self.control, self.target)
+    }
+
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target, self.control]
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ISWAP {
+    control: Qubit,
+    target: Qubit,
+}
+
+impl ISWAP {
+    pub fn new(control: Qubit, target: Qubit) -> Self {
+        Self { control, target }
+    }
+}
+
+impl QuantumGate for ISWAP {
+    fn unitary_matrix(&self) -> Matrix<Complex> {
+        array![
+            [
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 1.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 1.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+            ]
+        ]
+    }
+
+    fn name(&self) -> String {
+        format!("ISWAP(control={}, target={})", self.control, self.target)
+    }
+
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target, self.control]
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FSWAP {
+    control: Qubit,
+    target: Qubit,
+}
+
+impl FSWAP {
+    pub fn new(control: Qubit, target: Qubit) -> Self {
+        Self { control, target }
+    }
+}
+
+impl QuantumGate for FSWAP {
+    fn unitary_matrix(&self) -> Matrix<Complex> {
+        array![
+            [
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(-1.0, 0.0)
+            ]
+        ]
+    }
+
+    fn name(&self) -> String {
+        format!("FSWAP(control={}, target={})", self.control, self.target)
+    }
+
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target, self.control]
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ControlledPauliY {
+    control: Qubit,
+    target: Qubit,
+}
+
+impl ControlledPauliY {
+    pub fn new(control: Qubit, target: Qubit) -> Self {
+        Self { control, target }
+    }
+}
+
+impl QuantumGate for ControlledPauliY {
+    fn unitary_matrix(&self) -> Matrix<Complex> {
+        array![
+            [
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, -1.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, -1.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 1.0),
+                Complex::new(0.0, 0.0),
+            ]
+        ]
+    }
+
+    fn name(&self) -> String {
+        format!("CY(control={}, target={})", self.control, self.target)
+    }
+
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target, self.control]
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ControlledPauliZ {
+    control: Qubit,
+    target: Qubit,
+}
+
+impl ControlledPauliZ {
+    pub fn new(control: Qubit, target: Qubit) -> Self {
+        Self { control, target }
+    }
+}
+
+impl QuantumGate for ControlledPauliZ {
+    fn unitary_matrix(&self) -> Matrix<Complex> {
+        array![
+            [
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(-1.0, 0.0)
+            ]
+        ]
+    }
+
+    fn name(&self) -> String {
+        format!("CZ(control={}, target={})", self.control, self.target)
+    }
+
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target, self.control]
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EchoCrossResonance {
+    control: Qubit,
+    target: Qubit,
+}
+
+impl EchoCrossResonance {
+    pub fn new(control: Qubit, target: Qubit) -> Self {
+        Self { control, target }
+    }
+}
+
+impl QuantumGate for EchoCrossResonance {
+    fn unitary_matrix(&self) -> Matrix<Complex> {
+        let matrix: Matrix<Complex> = array![
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 1.0)
+            ],
+            [
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 1.0),
+                Complex::new(1.0, 0.0)
+            ],
+            [
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, -1.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0)
+            ],
+            [
+                Complex::new(0.0, -1.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 0.0),
+                Complex::new(0.0, 0.0)
+            ]
+        ];
+        // divide
+        matrix / 2.0_f64.sqrt()
+    }
+
+    fn name(&self) -> String {
+        format!("ECR(control={}, target={})", self.control, self.target)
+    }
+
+    fn construct_targets(&self) -> Vec<Qubit> {
+        vec![self.target, self.control]
     }
 }
