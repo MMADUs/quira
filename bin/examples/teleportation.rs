@@ -72,8 +72,8 @@ fn main() {
 
     // apply conditional measurement for teleportation
     // if any of the measurement is |1>, it applies the gate.
-    qc.cond_add(m0.unwrap(), X::new(q1)); // -> if Alice measured |1>, Bob applies Pauli X
-    qc.cond_add(m1.unwrap(), Z::new(q1)); // -> if Bob measured |1>, Alice applies Pauli Z
+    qc.cond_add(m0.unwrap(), X::new(q1)); // -> if Phi measured |1>, Bob applies Pauli X
+    qc.cond_add(m1.unwrap(), Z::new(q1)); // -> if Alice measured |1>, Bob applies Pauli Z
 
     qc.state_vector(true); // -> superposition state after teleportation
 

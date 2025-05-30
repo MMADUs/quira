@@ -15,6 +15,9 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#[cfg(test)]
+mod tests;
+
 pub mod clifford;
 pub use clifford::*;
 
@@ -32,8 +35,6 @@ pub use trivial::*;
 
 pub mod universal;
 pub use universal::*;
-
-use crate::types::Qubit;
 
 use super::QuantumGate;
 
@@ -60,8 +61,8 @@ pub enum TwoQubitOperation {
     InvSqrtISWAP,
 
     // parameterized
-    PhaseShiftControlledZ,
-    PhaseShiftControlledShift,
+    PhaseShiftedControlledZ,
+    PhaseShiftedControlledPhase,
     ControlledRotateX,
     ControlledRotateXY,
     XY,
@@ -74,10 +75,8 @@ pub enum TwoQubitOperation {
     ComplexPMInteraction,
     SpinInteraction,
 
-    // univeral
-    MolmerSorensenXX,
-
     // special
+    MolmerSorensenXX,
     Qsim,
     Fsim,
 }
