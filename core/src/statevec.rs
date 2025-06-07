@@ -23,12 +23,12 @@ use rand::Rng;
 #[derive(Clone)]
 /// the quantum state is the representation for the entire state of the qubit
 /// the state is represented as a hilbert space.
-pub struct QuantumState {
+pub struct QuantumStateVec {
     /// quantum amplitudes in complex vector
     amplitudes: Vector<Complex>,
 }
 
-impl QuantumState {
+impl QuantumStateVec {
     /// Initialize empty state
     pub fn new() -> Self {
         Self {
@@ -131,7 +131,7 @@ impl QuantumState {
     }
 
     /// Return the inner product with another qubit.
-    pub fn inner_product(&self, other: &QuantumState) -> Complex {
+    pub fn inner_product(&self, other: &QuantumStateVec) -> Complex {
         self.amplitudes.dot(&other.amplitudes)
     }
 

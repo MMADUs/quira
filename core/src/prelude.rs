@@ -1,6 +1,4 @@
-use std::fmt;
-
-use crate::types::Complex;
+use crate::{QuantumGate, Qubit, Vector, types::Complex};
 
 /// Result after long running a quantum circuit
 pub struct RunResult {
@@ -16,23 +14,26 @@ pub struct QubitState {
     pub prob_1: f64,
 }
 
-/// Error types for quantum operations
-#[derive(Debug)]
-pub enum QuantumError {
-    /// Error when trying to operate on incompatible qubits
-    IncompatibleQubits,
-    /// Error when matrix dimensions are invalid
-    InvalidDimension,
-    /// Error when qubit index is out of range
-    QubitOutOfRange,
+/// A variant of qubit insertion
+pub enum QubitToken {
+    FROM(Vector<Complex>),
+    ONES(usize),
+    ZEROS(usize),
+    RESET,
 }
 
-impl fmt::Display for QuantumError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            QuantumError::IncompatibleQubits => write!(f, "Incompatible qubits for operation"),
-            QuantumError::InvalidDimension => write!(f, "Invalid matrix dimension"),
-            QuantumError::QubitOutOfRange => write!(f, "Qubit index out of range"),
-        }
-    }
+/// Quantum operation tokens
+pub enum QuantumTokens {
+    /// applying qubit to state
+    Qubit(QubitToken),
+    /// apply gate operation
+    Operations(Box<dyn QuantumGate>),
+    /// conditionally apply gate operation
+    /// 'classical_bit', 'measured', 'operations'.
+    Conditional((usize, bool, Box<dyn QuantumGate>)),
+    /// qubit measurements
+    /// 'qubit_index', 'classical_bit'.
+    Measurements((Qubit, usize)),
+    /// circuit barrier
+    Barrier,
 }

@@ -3,29 +3,28 @@
 //!
 //! run example with: cargo run --example teleportation
 
-use quira::QuantumCircuit as QC;
+use quira::QuantumSimulator as QS;
 use quira::Qubit;
 use quira::QubitIndexing as QI;
-use quira::RunResult as RR;
 
 use quira::SingleQ::{Hadamard as H, PauliX as X, PauliZ as Z};
 use quira::TwoQ::ControlledNot as CNOT;
 
 fn main() {
     // make a new quantum circuit
-    let mut qc: QC = QC::new(true, QI::LittleEndian); // -> Qiskit uses Little Endian.
+    let mut qsim: QS = QS::new(QI::LittleEndian); // -> Qiskit uses Little Endian.
 
     // prepare qubit state to teleport
-    let phi: Qubit = qc.qb_zero();
+    let phi: Qubit = qsim.qb_zero();
 
     // prepare Alice's and Bob's qubit
-    let q0: Qubit = qc.qb_zero(); // -> Alice's qubit
-    let q1: Qubit = qc.qb_zero(); // -> Bob's qubit
+    let q0: Qubit = qsim.qb_zero(); // -> Alice's qubit
+    let q1: Qubit = qsim.qb_zero(); // -> Bob's qubit
 
     // apply hadamard to phi
-    qc.add(H::new(phi)); // -> superposition state we want to teleport
+    qsim.add(H::new(phi)); // -> superposition state we want to teleport
 
-    qc.state_vector(false);
+    qsim.state_vec(false);
     // [0] |000⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
     // [1] |001⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
     // [2] |010⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
@@ -36,10 +35,10 @@ fn main() {
     // [7] |111⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
 
     // apply hadamard & controlled not
-    qc.add(H::new(q0)); // -> superposition in Alice's qubit
-    qc.add(CNOT::new(q0, q1)); // entangled Alice's and Bob's qubit
+    qsim.add(H::new(q0)); // -> superposition in Alice's qubit
+    qsim.add(CNOT::new(q0, q1)); // entangled Alice's and Bob's qubit
 
-    qc.state_vector(false);
+    qsim.state_vec(false);
     // [0] |000⟩: (amp = 0.5000 + 0.0000i) => (prob = 0.2500, 25.00%)
     // [1] |001⟩: (amp = 0.5000 + 0.0000i) => (prob = 0.2500, 25.00%)
     // [2] |010⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
@@ -50,10 +49,10 @@ fn main() {
     // [7] |111⟩: (amp = 0.5000 + 0.0000i) => (prob = 0.2500, 25.00%)
 
     // apply controlled not & hadamard
-    qc.add(CNOT::new(phi, q0)); // -> entagled phi and Alice's qubit
-    qc.add(H::new(phi)); // -> finishes off phi bell state
+    qsim.add(CNOT::new(phi, q0)); // -> entagled phi and Alice's qubit
+    qsim.add(H::new(phi)); // -> finishes off phi bell state
 
-    qc.state_vector(true);
+    qsim.state_vec(true);
     // [0] |000⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
     // [1] |001⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
     // [2] |010⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
@@ -63,25 +62,20 @@ fn main() {
     // [6] |110⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
     // [7] |111⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
 
-    let m0: Option<bool> = qc.measure(phi, 0); // measure phi to classical reg 0
-    let m1: Option<bool> = qc.measure(q0, 1); // measure Alice's qubit to classical reg 1
+    let m0: bool = qsim.measure(phi, 0); // measure phi to classical reg 0
+    let m1: bool = qsim.measure(q0, 1); // measure Alice's qubit to classical reg 1
 
-    println!("m0 = {}, m1 = {}", m0.unwrap() as u8, m1.unwrap() as u8); // -> superposition outcome
+    println!("m0 = {}, m1 = {}", m0 as u8, m1 as u8); // -> superposition outcome
 
-    qc.state_vector(true); // -> superposition state before teleportaion
+    qsim.state_vec(true); // -> superposition state before teleportaion
 
     // apply conditional measurement for teleportation
     // if any of the measurement is |1>, it applies the gate.
-    qc.cond_add(m0.unwrap(), X::new(q1)); // -> if Phi measured |1>, Bob applies Pauli X
-    qc.cond_add(m1.unwrap(), Z::new(q1)); // -> if Alice measured |1>, Bob applies Pauli Z
+    qsim.cond_add(m0, X::new(q1)); // -> if Phi measured |1>, Bob applies Pauli X
+    qsim.cond_add(m1, Z::new(q1)); // -> if Alice measured |1>, Bob applies Pauli Z
 
-    qc.state_vector(true); // -> superposition state after teleportation
+    qsim.state_vec(true); // -> superposition state after teleportation
 
-    qc.state_qubit(q1); // -> verify, now phi state should be teleported to Bob's qubit state
-    qc.state_qubit(q0); // -> verify, now Alice's qubit has collapse
-
-    let shots: usize = 10000;
-    let result: RR = qc.run(shots); // -> run cirucit for N shots
-
-    qc.analyze(result); // -> analyze the statistic outcome from N shots result
+    qsim.state_qubit(q1); // -> verify, now phi state should be teleported to Bob's qubit state
+    qsim.state_qubit(q0); // -> verify, now Alice's qubit has collapse
 }

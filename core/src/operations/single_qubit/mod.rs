@@ -61,15 +61,15 @@ pub enum SingleQubitOperation {
     RotateY,
     RotateZ,
     RotateXY,
-    PhaseShift0, // rename to U0Gate
-    PhaseShift1, // rename to U1Gate
-    U2Gate, // todo!
-    U3Gate, // todo!
-    XPowGate, // todo!
-    YPowGate, // todo!
-    ZPowGate, // todo!
-    PhasedXPowGate, // todo!
-    HPowGate, // todo!
+    U0Gate,
+    U1Gate,
+    U2Gate,
+    U3Gate,
+    XPowGate,
+    YPowGate,
+    ZPowGate,
+    PhasedXPowGate,
+    HPowGate,
     RotateAroundSphericalAxis,
 
     // clifford

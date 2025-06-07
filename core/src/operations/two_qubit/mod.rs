@@ -48,13 +48,17 @@ pub struct KakDecomposition {
 
 pub enum TwoQubitOperation {
     // clifford
-    CNOT,
+    ControlledNot,
     SWAP,
     ISWAP,
     FSWAP,
     ControlledPauliY,
     ControlledPauliZ,
     EchoCrossResonance,
+    // todo!
+    DoubleControlledNot,
+    ControlledSqrtX,
+    ControlledHadamard,
 
     // non-clifford
     SqrtISWAP,
@@ -74,6 +78,23 @@ pub enum TwoQubitOperation {
     PMInteraction,
     ComplexPMInteraction,
     SpinInteraction,
+    // todo!
+    RotationXX,
+    RotationYY,
+    RotationZZ,
+    RotationZX,
+    SwapPowGate, // check
+    XXPower,
+    YYPower,
+    ZZPower,
+    ControlledZPower,
+    ControlledNotPower,
+    ISwapPowGate, // check
+
+    // universal? todo!
+    CU3Gate,
+    CU1Gate, // ControlledPhaseShift?
+    CUGate,
 
     // special
     MolmerSorensenXX,

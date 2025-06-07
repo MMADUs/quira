@@ -2,9 +2,9 @@ pub mod single_qubit;
 pub mod two_qubit;
 
 use crate::{
-    endian::{expand_unitary, QubitIndexing},
-    state::QuantumState,
-    types::{Complex, Vector, Matrix, Qubit},
+    endian::{QubitIndexing, expand_unitary},
+    statevec::QuantumStateVec,
+    types::{Complex, Matrix, Qubit},
 };
 
 pub trait QuantumGate: Send + Sync {
@@ -18,7 +18,7 @@ pub trait QuantumGate: Send + Sync {
     fn construct_targets(&self) -> Vec<Qubit>;
 
     /// Apply this gate to the given quantum state
-    fn apply(&self, state: &mut QuantumState, indexing: &QubitIndexing) {
+    fn apply(&self, state: &mut QuantumStateVec, indexing: &QubitIndexing) {
         let n = state.num_qubits();
         let targets = self.construct_targets();
         let unitary = self.unitary_matrix();

@@ -18,17 +18,23 @@
 pub mod circuit;
 pub use circuit::*;
 
+pub mod simulator;
+pub use simulator::*;
+
+pub mod backend;
+pub use backend::*;
+
 pub mod constant;
 
 pub mod operations;
-pub use operations::*;
 pub use operations::single_qubit as SingleQ;
 pub use operations::two_qubit as TwoQ;
+pub use operations::*;
 
 pub mod prelude;
 pub use prelude::*;
 
-pub mod state;
+pub mod statevec;
 
 pub mod types;
 pub use types::*;
