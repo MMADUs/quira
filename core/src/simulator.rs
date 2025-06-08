@@ -18,6 +18,7 @@
 use std::collections::HashMap;
 
 use crate::{
+    QuantumCircuit, QuantumTokens, QubitToken,
     constant::{C_ONE, C_ZERO, EPSILON},
     endian::QubitIndexing,
     operations::QuantumGate,
@@ -29,12 +30,15 @@ use crate::{
 pub struct QuantumSimulator {
     /// the quantum state vector.
     statevec: QuantumStateVec,
-    /// map of Measurements.
+    /// map of measurements
+    /// set the final outcome location of the qubit by classical bit.
     /// (qubit -> classical_bit)
     measurements: HashMap<Qubit, usize>,
-    /// a measurement result of the current quantum state
-    /// measurement will directly updated if 'direct_apply' is enabled.
-    measured_state: HashMap<Qubit, bool>,
+    /// the classical register
+    /// stores the final outcome based on the map of measurements.
+    classical_register: HashMap<usize, bool>,
+    /// store the result of the collapsed qubit state.
+    collapsed_state: HashMap<Qubit, bool>,
     /// qubit indexing when applying to quantum state.
     qubit_indexing: QubitIndexing,
 }
@@ -45,7 +49,8 @@ impl QuantumSimulator {
         Self {
             statevec: QuantumStateVec::new(),
             measurements: HashMap::new(),
-            measured_state: HashMap::new(),
+            classical_register: HashMap::new(),
+            collapsed_state: HashMap::new(),
             qubit_indexing: indexing,
         }
     }
@@ -62,6 +67,20 @@ impl QuantumSimulator {
     {
         let vector = Vector::from_iter(num_iter);
         self.qb_from_vector(vector)
+    }
+
+    /// Create a new qubit in zero state |0⟩.
+    pub fn qb_zero(&mut self) -> Qubit {
+        // qubit representation in zero state as vector = [1, 0]
+        let ket_zero = Vector::from_iter([C_ONE, C_ZERO]);
+        self.qb_from_vector(ket_zero)
+    }
+
+    /// Create a new qubit in one state |1⟩.
+    pub fn qb_one(&mut self) -> Qubit {
+        // qubit representation in one state as vector = [0, 1]
+        let ket_one = Vector::from_iter([C_ZERO, C_ONE]);
+        self.qb_from_vector(ket_one)
     }
 
     /// Create a new qubit with arbitrary vector state |?⟩.
@@ -88,28 +107,38 @@ impl QuantumSimulator {
         self.num_qubits() - 1
     }
 
-    /// Create a new qubit in zero state |0⟩.
-    pub fn qb_zero(&mut self) -> Qubit {
+    /// Set and replace the entire qubit state to |0..0⟩.
+    pub fn zeros(&mut self, num_qubits: usize) -> Vec<Qubit> {
+        let start = self.num_qubits();
+        let end = start + num_qubits;
         // qubit representation in zero state as vector = [1, 0]
         let ket_zero = Vector::from_iter([C_ONE, C_ZERO]);
-        self.qb_from_vector(ket_zero)
-    }
-
-    /// Create a new qubit in one state |1⟩.
-    pub fn qb_one(&mut self) -> Qubit {
-        // qubit representation in one state as vector = [0, 1]
-        let ket_one = Vector::from_iter([C_ZERO, C_ONE]);
-        self.qb_from_vector(ket_one)
-    }
-
-    /// Set and replace the entire qubit state to |0..0⟩.
-    pub fn zeros(&mut self, num_qubits: usize) {
-        self.statevec = QuantumStateVec::zero(num_qubits)
+        for _ in 0..num_qubits {
+            if self.statevec.is_empty() {
+                self.statevec = QuantumStateVec::from(ket_zero.clone());
+            } else {
+                self.statevec = self.statevec.qubit_tensor_product(ket_zero.clone());
+            }
+        }
+        // return index
+        (start..end).collect()
     }
 
     /// Set and replace the entire qubit state to |1..1⟩.
-    pub fn ones(&mut self, num_qubits: usize) {
-        self.statevec = QuantumStateVec::one(num_qubits);
+    pub fn ones(&mut self, num_qubits: usize) -> Vec<Qubit> {
+        let start = self.num_qubits();
+        let end = start + num_qubits;
+        // qubit representation in one state as vector = [0, 1]
+        let ket_one = Vector::from_iter([C_ZERO, C_ONE]);
+        for _ in 0..num_qubits {
+            if self.statevec.is_empty() {
+                self.statevec = QuantumStateVec::from(ket_one.clone());
+            } else {
+                self.statevec = self.statevec.qubit_tensor_product(ket_one.clone());
+            }
+        }
+        // return index
+        (start..end).collect()
     }
 
     /// Empty the qubit state.
@@ -143,9 +172,16 @@ impl QuantumSimulator {
         if qubit > self.statevec.num_qubits() {
             panic!("Qubit index out of range");
         }
-        let bit = self.statevec.measure_qubit(qubit);
-        self.measured_state.insert(qubit, bit);
+        if let Some(_) = self.collapsed_state.get(&qubit) {
+            panic!("Unable to measure a collapsed qubit state");
+        }
+        if let Some(_) = self.measurements.get(&qubit) {
+            println!("Warning, replacing existing qubit register");
+        }
         self.measurements.insert(qubit, classical_bit);
+        let bit = self.statevec.measure_qubit(qubit);
+        self.collapsed_state.insert(qubit, bit);
+        self.classical_register.insert(classical_bit, bit);
         bit
     }
 
@@ -163,7 +199,7 @@ impl QuantumSimulator {
 
     /// Get the quantum state from specified qubit
     pub fn state_qubit(&self, qubit: Qubit) -> Option<QubitState> {
-        if let Some(&measured_bit) = self.measured_state.get(&qubit) {
+        if let Some(&measured_bit) = self.collapsed_state.get(&qubit) {
             println!("\nQubit {} state:", qubit);
             println!(
                 "Qubit {} already collapsed to classical bit: {}",
@@ -173,5 +209,81 @@ impl QuantumSimulator {
         }
         let state = self.statevec.get_qubit_state(qubit);
         Some(state)
+    }
+
+    /// Simulate a quantum circuit.
+    pub fn from_circuit(&mut self, circuit: QuantumCircuit) {
+        // Apply quantum operation based on tokens.
+        for circuit_ops in circuit.operations_as_ref() {
+            match circuit_ops {
+                QuantumTokens::Qubit(qb) => {
+                    match qb {
+                        QubitToken::FROM(vector) => {
+                            if self.statevec.is_empty() {
+                                self.statevec = QuantumStateVec::from(vector.clone());
+                            } else {
+                                self.statevec = self.statevec.qubit_tensor_product(vector.clone())
+                            }
+                        }
+                        QubitToken::ONES(num_qubits) => {
+                            // qubit representation in one state as vector = [0, 1]
+                            let ket_one = Vector::from_iter([C_ZERO, C_ONE]);
+                            for _ in 0..*num_qubits {
+                                if self.statevec.is_empty() {
+                                    self.statevec = QuantumStateVec::from(ket_one.clone());
+                                } else {
+                                    self.statevec =
+                                        self.statevec.qubit_tensor_product(ket_one.clone());
+                                }
+                            }
+                        }
+                        QubitToken::ZEROS(num_qubits) => {
+                            // qubit representation in zero state as vector = [1, 0]
+                            let ket_zero = Vector::from_iter([C_ONE, C_ZERO]);
+                            for _ in 0..*num_qubits {
+                                if self.statevec.is_empty() {
+                                    self.statevec = QuantumStateVec::from(ket_zero.clone());
+                                } else {
+                                    self.statevec =
+                                        self.statevec.qubit_tensor_product(ket_zero.clone());
+                                }
+                            }
+                        }
+                        QubitToken::RESET => self.statevec = QuantumStateVec::new(),
+                    }
+                }
+                QuantumTokens::Operations(ops) => {
+                    ops.apply(&mut self.statevec, &self.qubit_indexing);
+                }
+                QuantumTokens::Conditional((classical_bit, if_measured, ops)) => {
+                    // get classical measurement result
+                    let measured = self.classical_register.get(classical_bit);
+                    let measured =
+                        measured.expect(&format!("classical_bit {} is empty", classical_bit));
+                    // conditionally apply
+                    if if_measured == measured {
+                        ops.apply(&mut self.statevec, &self.qubit_indexing);
+                    }
+                }
+                QuantumTokens::Measurements((qubit, classical_bit)) => {
+                    // validate qubit size
+                    if *qubit > self.num_qubits() {
+                        panic!("Measurement out of index for qubit: {}", qubit);
+                    }
+                    if let Some(_) = self.collapsed_state.get(qubit) {
+                        panic!("Unable to measure a collapsed qubit state");
+                    }
+                    if let Some(_) = self.measurements.get(qubit) {
+                        println!("Warning, replacing existing qubit register");
+                    }
+                    self.measurements.insert(*qubit, *classical_bit);
+                    // apply measurement
+                    let bit = self.statevec.measure_qubit(*qubit);
+                    self.collapsed_state.insert(*qubit, bit);
+                    self.classical_register.insert(*classical_bit, bit);
+                }
+                QuantumTokens::Barrier => {}
+            }
+        }
     }
 }

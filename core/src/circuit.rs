@@ -36,11 +36,11 @@ pub struct QuantumCircuit {
 
 impl QuantumCircuit {
     /// Create a new quantum circuit.
-    pub fn new(num_qubits: usize) -> Self {
+    pub fn new() -> Self {
         Self {
             current_qubits: 0,
             operations: Vec::new(),
-            registers: HashMap::with_capacity(num_qubits),
+            registers: HashMap::new(),
         }
     }
 
