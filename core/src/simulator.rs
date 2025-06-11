@@ -99,11 +99,7 @@ impl QuantumSimulator {
             panic!("State vector norm is either zero or too small");
         }
 
-        if self.statevec.is_empty() {
-            self.statevec = QuantumStateVec::from(state);
-        } else {
-            self.statevec = self.statevec.qubit_tensor_product(state);
-        }
+        self.statevec.expand_state(state);
         self.num_qubits() - 1
     }
 
@@ -111,15 +107,14 @@ impl QuantumSimulator {
     pub fn zeros(&mut self, num_qubits: usize) -> Vec<Qubit> {
         let start = self.num_qubits();
         let end = start + num_qubits;
-        // qubit representation in zero state as vector = [1, 0]
-        let ket_zero = Vector::from_iter([C_ONE, C_ZERO]);
-        for _ in 0..num_qubits {
-            if self.statevec.is_empty() {
-                self.statevec = QuantumStateVec::from(ket_zero.clone());
-            } else {
-                self.statevec = self.statevec.qubit_tensor_product(ket_zero.clone());
-            }
-        }
+        // qubit representation in zero state as vector [1, 0, ..., 0] on N th qubit.
+        // left shift (<<) is equal to 2^n as n = number of shift
+        // the size of qubit probability in vector space is mapped into 2^k
+        // 1 * 2^k as k is the number of qubits
+        let dim_size = 1 << num_qubits;
+        let mut amplitudes = Vector::from_elem(dim_size, C_ZERO);
+        amplitudes[0] = C_ONE;
+        self.statevec.expand_state(amplitudes);
         // return index
         (start..end).collect()
     }
@@ -128,15 +123,14 @@ impl QuantumSimulator {
     pub fn ones(&mut self, num_qubits: usize) -> Vec<Qubit> {
         let start = self.num_qubits();
         let end = start + num_qubits;
-        // qubit representation in one state as vector = [0, 1]
-        let ket_one = Vector::from_iter([C_ZERO, C_ONE]);
-        for _ in 0..num_qubits {
-            if self.statevec.is_empty() {
-                self.statevec = QuantumStateVec::from(ket_one.clone());
-            } else {
-                self.statevec = self.statevec.qubit_tensor_product(ket_one.clone());
-            }
-        }
+        // qubit representation in one state as vector = [0, ..., 0, 1] on N th qubit.
+        // left shift (<<) is equal to 2^n as n = number of shift
+        // the size of qubit probability in vector space is mapped into 2^k
+        // 1 * 2^k as k is the number of qubits
+        let dim_size = 1 << num_qubits;
+        let mut amplitudes = Vector::from_elem(dim_size, C_ZERO);
+        amplitudes[dim_size - 1] = C_ONE;
+        self.statevec.expand_state(amplitudes);
         // return index
         (start..end).collect()
     }
@@ -219,34 +213,20 @@ impl QuantumSimulator {
                 QuantumTokens::Qubit(qb) => {
                     match qb {
                         QubitToken::FROM(vector) => {
-                            if self.statevec.is_empty() {
-                                self.statevec = QuantumStateVec::from(vector.clone());
-                            } else {
-                                self.statevec = self.statevec.qubit_tensor_product(vector.clone())
-                            }
+                            self.statevec.expand_state(vector.clone());
                         }
                         QubitToken::ONES(num_qubits) => {
                             // qubit representation in one state as vector = [0, 1]
                             let ket_one = Vector::from_iter([C_ZERO, C_ONE]);
                             for _ in 0..*num_qubits {
-                                if self.statevec.is_empty() {
-                                    self.statevec = QuantumStateVec::from(ket_one.clone());
-                                } else {
-                                    self.statevec =
-                                        self.statevec.qubit_tensor_product(ket_one.clone());
-                                }
+                                self.statevec.expand_state(ket_one.clone());
                             }
                         }
                         QubitToken::ZEROS(num_qubits) => {
                             // qubit representation in zero state as vector = [1, 0]
                             let ket_zero = Vector::from_iter([C_ONE, C_ZERO]);
                             for _ in 0..*num_qubits {
-                                if self.statevec.is_empty() {
-                                    self.statevec = QuantumStateVec::from(ket_zero.clone());
-                                } else {
-                                    self.statevec =
-                                        self.statevec.qubit_tensor_product(ket_zero.clone());
-                                }
+                                self.statevec.expand_state(ket_zero.clone());
                             }
                         }
                         QubitToken::RESET => self.statevec = QuantumStateVec::new(),

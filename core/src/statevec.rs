@@ -62,26 +62,21 @@ impl QuantumStateVec {
         qs.normalize();
         qs
     }
-
-    /// Set the qubit register to the |0⟩^n state (n-qubit zero state).
-    /// The amplitude vector is [1, 0, 0, ..., 0], representing the basis state |00...0⟩.
-    pub fn zero(num_qubits: usize) -> Self {
-        // left shift (<<) is equal to 2^n as n = number of shift
-        // the size of qubit probability in vector space is mapped into 2^k
-        // 1 * 2^k as k is the number of qubits
-        let dim_size = 1 << num_qubits;
-        let mut amplitudes = Vector::from_elem(dim_size, C_ZERO);
-        amplitudes[0] = C_ONE;
-        Self { amplitudes }
-    }
-
-    /// Set the qubit register to the |1⟩^n state (n-qubit one state).
-    /// The amplitude vector is [0, 0, ..., 0, 1], representing the basis state |11...1⟩.
-    pub fn one(num_qubits: usize) -> Self {
-        let dim_size = 1 << num_qubits;
-        let mut amplitudes = Vector::from_elem(dim_size, C_ZERO);
-        amplitudes[dim_size - 1] = C_ONE;
-        Self { amplitudes }
+    
+    /// Expanding the current state vector by kronecker product
+    pub fn expand_state(&mut self, state: Vector<Complex>) {
+        if self.is_empty() {
+            self.amplitudes = Self::from(state).amplitudes;
+            return;
+        }
+        let mut new_amplitudes = Vec::with_capacity(self.amplitudes.len() * state.len());
+        for &a in self.amplitudes.iter() {
+            for &b in state.iter() {
+                new_amplitudes.push(a * b)
+            }
+        }
+        self.amplitudes = Vector::from(new_amplitudes);
+        self.normalize();
     }
 
     /// Returns the number of qubits (log2 of dimension).
@@ -133,22 +128,6 @@ impl QuantumStateVec {
     /// Return the inner product with another qubit.
     pub fn inner_product(&self, other: &QuantumStateVec) -> Complex {
         self.amplitudes.dot(&other.amplitudes)
-    }
-
-    /// Return the tensor product with another qubit state
-    pub fn qubit_tensor_product(&self, state: Vector<Complex>) -> Self {
-        assert!(state.len() == 2, "Only tensor with a single qubit");
-        let mut new_amplitudes = Vec::with_capacity(self.amplitudes.len() * 2);
-        for &a in self.amplitudes.iter() {
-            for &b in state.iter() {
-                new_amplitudes.push(a * b)
-            }
-        }
-        let mut result = Self {
-            amplitudes: Vector::from(new_amplitudes),
-        };
-        result.normalize();
-        result
     }
 
     /// Measure all qubits and collapse the state

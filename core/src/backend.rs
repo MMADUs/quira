@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::{fmt::Pointer, time::Instant};
+use std::time::Instant;
 
 use crate::{
     QuantumCircuit, QuantumTokens, QubitToken,
@@ -120,32 +120,20 @@ impl QuantumBackend {
                                 QuantumTokens::Qubit(qb) => {
                                     match qb {
                                         QubitToken::FROM(vector) => {
-                                            if statevec.is_empty() {
-                                                statevec = QuantumStateVec::from(vector.clone());
-                                            } else {
-                                                statevec = statevec.qubit_tensor_product(vector.clone())
-                                            }
+                                            statevec.expand_state(vector.clone());
                                         }
                                         QubitToken::ONES(num_qubits) => {
                                             // qubit representation in one state as vector = [0, 1]
                                             let ket_one = Vector::from_iter([C_ZERO, C_ONE]);
                                             for _ in 0..*num_qubits {
-                                                if statevec.is_empty() {
-                                                    statevec = QuantumStateVec::from(ket_one.clone());
-                                                } else {
-                                                    statevec = statevec.qubit_tensor_product(ket_one.clone()); 
-                                                }
+                                                statevec.expand_state(ket_one.clone());
                                             }
                                         }
                                         QubitToken::ZEROS(num_qubits) => {
                                             // qubit representation in zero state as vector = [1, 0]
                                             let ket_zero = Vector::from_iter([C_ONE, C_ZERO]);
                                             for _ in 0..*num_qubits {
-                                                if statevec.is_empty() {
-                                                    statevec = QuantumStateVec::from(ket_zero.clone());
-                                                } else {
-                                                    statevec = statevec.qubit_tensor_product(ket_zero.clone());
-                                                }
+                                                statevec.expand_state(ket_zero.clone());
                                             }
                                         }
                                         QubitToken::RESET => statevec = QuantumStateVec::new(),
