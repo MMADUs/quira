@@ -31,6 +31,9 @@ pub use operations::single_qubit as SingleQ;
 pub use operations::two_qubit as TwoQ;
 pub use operations::*;
 
+pub mod density;
+pub use density::*;
+
 pub mod prelude;
 pub use prelude::*;
 

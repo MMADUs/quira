@@ -8,5 +8,6 @@ edition = "2024"
 [dependencies]
 num-complex = "0.4.6"
 ndarray = { version = "0.16.1", features = ["rayon"] }
+ndarray-linalg = { version = "0.17.0", features = ["intel-mkl-static"] }
 rayon = "1.10.0"
 rand = "0.9.1"
