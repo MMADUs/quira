@@ -18,7 +18,7 @@
 use ndarray_linalg::{EigValsh, Eigh, UPLO};
 
 use crate::{
-    constant::EPSILON,
+    constant::{EPSILON, INF},
     types::{Complex, Matrix, Vector},
 };
 
@@ -37,4 +37,16 @@ pub fn eigen_decomposition(matrix: &Matrix<Complex>) -> (Vector<f64>, Matrix<Com
     matrix
         .eigh(UPLO::Lower)
         .expect("Failed to compute eigen decomposition")
+}
+
+pub fn matrix_sqrt(matrix: &Matrix<Complex>) -> Matrix<Complex> {
+    let (eigenvals, eigenvecs) = eigen_decomposition(matrix);
+
+    let sqrt_eigenvals: Vector<Complex> =
+        eigenvals.mapv(|val| Complex::new(val.clamp(0.0, INF).sqrt(), 0.0));
+
+    let sqrt_diag = Matrix::from_diag(&sqrt_eigenvals);
+    eigenvecs
+        .dot(&sqrt_diag)
+        .dot(&eigenvecs.t().mapv(|x| x.conj()))
 }

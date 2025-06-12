@@ -7,7 +7,9 @@ edition = "2024"
 
 [dependencies]
 num-complex = "0.4.6"
-ndarray = { version = "0.16.1", features = ["rayon"] }
+ndarray = { version = "0.16.1", features = ["std", "serde", "blas", "rayon", "approx"] }
 ndarray-linalg = { version = "0.17.0", features = ["intel-mkl-static"] }
+blas-src = { version = "0.10", features = ["intel-mkl"] }
 rayon = "1.10.0"
 rand = "0.9.1"
+serde = { version = "1.0", features = ["derive"] }
