@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ndarray_linalg::{EigValsh, Eigh, UPLO};
+use ndarray_linalg::{EigValsh, Eigh, Inverse, UPLO};
 
 use crate::{
     constant::{EPSILON, INF},
@@ -49,4 +49,22 @@ pub fn matrix_sqrt(matrix: &Matrix<Complex>) -> Matrix<Complex> {
     eigenvecs
         .dot(&sqrt_diag)
         .dot(&eigenvecs.t().mapv(|x| x.conj()))
+}
+
+pub fn matrix_log(matrix: &Matrix<Complex>) -> Option<Matrix<Complex>> {
+    let (eigenvalues, eigenvectors) = eigen_decomposition(matrix);
+    let dim = matrix.nrows();
+
+    // Diagonal matrix of log(eigenvalues)
+    let mut log_diag = Matrix::<Complex>::zeros((dim, dim));
+    for i in 0..dim {
+        if eigenvalues[i] <= 0.0 {
+            return None; // log undefined or divergent
+        }
+        log_diag[[i, i]] = Complex::new(eigenvalues[i].ln(), 0.0);
+    }
+
+    let vinv = eigenvectors.inv().ok()?;
+    let result = eigenvectors.dot(&log_diag).dot(&vinv);
+    Some(result)
 }

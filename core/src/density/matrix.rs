@@ -108,6 +108,33 @@ impl Density {
         }
     }
 
+    /// Unitary evolution U ρ U†
+    pub fn evolve_unitary(&self, unitary: &Matrix<Complex>) -> Self {
+        let u_rho = unitary.dot(self.matrix_as_ref());
+        let u_dagger = ops::dagger(unitary);
+        let evolved = u_rho.dot(&u_dagger);
+        Self {
+            matrix: evolved,
+            dim: self.dim(),
+        }
+    }
+
+    /// Apply Kraus operators: ρ' = Σᵢ Kᵢ ρ Kᵢ†
+    pub fn apply_kraus_ops(&self, kraus_ops: &[Matrix<Complex>]) -> Self {
+        let mut result = Matrix::zeros((self.dim(), self.dim()));
+        // apply operations
+        for kraus_op in kraus_ops {
+            let k_rho = kraus_op.dot(self.matrix_as_ref());
+            let k_dagger = ops::dagger(&kraus_op);
+            let k_rho_k_dag = k_rho.dot(&k_dagger);
+            result = result + k_rho_k_dag;
+        }
+        Self {
+            matrix: result,
+            dim: self.dim(),
+        }
+    }
+
     /// Get reference to the density matrix
     pub fn matrix_as_ref(&self) -> &Matrix<Complex> {
         &self.matrix

@@ -17,7 +17,7 @@
 
 use ndarray::{LinalgScalar};
 
-use crate::Matrix;
+use crate::{Complex, Matrix};
 
 /// Kronecker product operation.
 pub fn kron<T>(a: &Matrix<T>, b: &Matrix<T>) -> Matrix<T>
@@ -40,3 +40,10 @@ where
     }
     result
 }
+
+/// Matrix dagger operation.
+pub fn dagger(u: &Matrix<Complex>) -> Matrix<Complex> {
+    u.mapv(|x| x.conj()).t().to_owned()
+}
+
+

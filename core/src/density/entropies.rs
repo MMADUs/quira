@@ -24,14 +24,28 @@ use crate::{
 
 use super::matrix::Density;
 
-/// Shannon entropy in the computational basis (diagonal elements)
-pub fn shannon_entropy(density: &Density) -> f64 {
-    let diag = density.matrix_as_ref().diag();
-    diag.iter()
-        .map(|c| c.re()) // Extract real part
-        .filter(|&p| p > EPSILON) // Avoid log(0)
+/// Shannon entropy in the computational basis (probabilities)
+pub fn shannon_entropy_probs<P>(probs: P) -> f64
+where
+    P: IntoIterator<Item = f64>,
+{
+    probs
+        .into_iter()
+        .filter(|&p| p > EPSILON)
         .map(|p| -p * p.ln())
         .sum()
+}
+
+/// Shannon entropy in the computational basis (diagonal elements)
+pub fn shannon_entropy_density(density: &Density) -> f64 {
+    let diag_probs = density
+        .matrix_as_ref()
+        .diag()
+        .iter()
+        .map(|c| c.re())
+        .collect::<Vec<_>>();
+
+    shannon_entropy_probs(diag_probs)
 }
 
 /// Compute linear entropy 1 - Tr(ρ²)
@@ -45,26 +59,27 @@ pub fn von_neumann_entropy(density: &Density) -> f64 {
 }
 
 /// Relative entropy S(ρ||σ) = Tr(ρ(log ρ - log σ))
-/// Note: This is a simplified implementation using diagonal approximation
-pub fn relative_entropy(density: &Density, other: &Density) -> f64 {
-    assert_eq!(density.dim(), other.dim(), "dimensions must match");
-
-    let eigenvals_a = eigen::eigen_values(density.matrix_as_ref());
-    let eigenvals_b = eigen::eigen_values(other.matrix_as_ref());
-
-    // For a proper implementation, both matrices should be diagonalized
-    // in the same basis. This is a simplified version.
-    let mut relative_entropy = 0.0;
-    for i in 0..eigenvals_a.len() {
-        let rho_i = eigenvals_a[i];
-        let sigma_i = eigenvals_b[i];
-        if rho_i > EPSILON && sigma_i > EPSILON {
-            relative_entropy += rho_i * (rho_i.ln() - sigma_i.ln());
-        } else if rho_i > EPSILON && sigma_i <= EPSILON {
-            return f64::INFINITY; // Divergence
-        }
+pub fn relative_entropy(rho: &Density, sigma: &Density) -> Option<f64> {
+    if !rho.is_positive_semidefinite() || !sigma.is_positive_semidefinite() {
+        return None;
     }
-    relative_entropy
+
+    let log_rho = eigen::matrix_log(rho.matrix_as_ref())?;
+    let log_sigma = eigen::matrix_log(sigma.matrix_as_ref())?;
+    let log_diff = &log_rho - &log_sigma;
+    let trace = rho
+        .matrix_as_ref()
+        .dot(&log_diff)
+        .diag()
+        .map(|c| c.re)
+        .sum();
+
+    if trace < -1.0 * EPSILON {
+        eprintln!("warning: relative entropy is negative: {}", trace);
+        return Some(0.0);
+    }
+
+    Some(trace.max(0.0))
 }
 
 /// Mutual information I(A:B) = S(ρ_A) + S(ρ_B) - S(ρ_AB)
