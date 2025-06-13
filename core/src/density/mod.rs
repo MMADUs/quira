@@ -16,5 +16,5 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 pub mod matrix;
-pub mod entropy;
+pub mod entropies;
 pub mod entanglement;
