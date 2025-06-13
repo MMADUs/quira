@@ -304,30 +304,6 @@ impl Density {
         }
     }
 
-    // Helper function for partial transpose
-    pub(crate) fn partial_transpose(&self, dim_a: usize, dim_b: usize) -> Matrix<Complex> {
-        assert_eq!(self.dim(), dim_a * dim_b, "dimensions must match");
-
-        let mut result = Matrix::zeros((self.dim(), self.dim()));
-
-        for i in 0..dim_a {
-            for j in 0..dim_b {
-                for k in 0..dim_a {
-                    for l in 0..dim_b {
-                        let row1 = i * dim_b + j;
-                        let col1 = k * dim_b + l;
-                        let row2 = i * dim_b + l; // Transpose in B subsystem
-                        let col2 = k * dim_b + j;
-
-                        result[[row2, col2]] = self.matrix[[row1, col1]];
-                    }
-                }
-            }
-        }
-
-        result
-    }
-
     /// Trace distance (1/2) * ||ρ - σ||₁
     pub fn trace_distance(&self, other: &Density) -> f64 {
         assert_eq!(self.dim, other.dim, "dimensions must match");

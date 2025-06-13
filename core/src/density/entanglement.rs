@@ -17,9 +17,7 @@
 
 use ndarray_linalg::SVD;
 
-use crate::{
-    Complex, Matrix, QuantumGate, SingleQ::PauliY, Vector, constant::EPSILON, eigen, ops::kron,
-};
+use crate::{Complex, Matrix, QuantumGate, SingleQ::PauliY, Vector, constant::EPSILON, eigen, ops};
 
 use super::matrix::Density;
 
@@ -28,7 +26,7 @@ pub fn concurrence(density: &Density) -> f64 {
     assert_eq!(density.dim(), 2, "concurrence is only for 2 qubit system");
     // Y^⊗n where n is n-qubit system
     let pauli_y = PauliY::new(0).unitary_matrix();
-    let y_tensor_y = kron(&pauli_y, &pauli_y);
+    let y_tensor_y = ops::kron(&pauli_y, &pauli_y);
     // ρ̃ = (Y^⊗n) ρ* (Y^⊗n)
     let rho_conj = density.matrix_as_ref().mapv(|x| x.conj());
     let rho_tilde = y_tensor_y.dot(&rho_conj).dot(&y_tensor_y);
@@ -65,7 +63,7 @@ pub fn entanglement_of_formation(density: &Density) -> f64 {
         if x == 0.0 || x == 1.0 {
             0.0
         } else {
-            -x * x.log2() - (1.0 - x) * (1.0 - x).log2()
+            -1.0 * x * x.log2() - (1.0 - x) * (1.0 - x).log2()
         }
     };
     // compute x
@@ -81,7 +79,11 @@ pub fn logarithmic_negativity(density: &Density, subsystem_dims: &[usize]) -> f6
         "logarithmic negativity requires exactly 2 subsystems"
     );
     // Partial transpose with respect to the second subsystem
-    let rho_pt = density.partial_transpose(subsystem_dims[0], subsystem_dims[1]);
+    let rho_pt = ops::partial_transpose(
+        density.matrix_as_ref(),
+        subsystem_dims[0],
+        subsystem_dims[1],
+    );
     // Compute eigenvalues of the partial transpose
     let eigenvals = eigen::eigen_values(&rho_pt);
     // Trace norm = sum of absolute values of all eigenvalues
@@ -97,7 +99,11 @@ pub fn negativity(density: &Density, subsystem_dims: &[usize]) -> f64 {
         "negativity requires exactly 2 subsystems"
     );
     // Partial transpose of the density matrix
-    let rho_pt = density.partial_transpose(subsystem_dims[0], subsystem_dims[1]);
+    let rho_pt = ops::partial_transpose(
+        density.matrix_as_ref(),
+        subsystem_dims[0],
+        subsystem_dims[1],
+    );
     // Eigenvalues of the partially transposed matrix
     let eigenvals = eigen::eigen_values(&rho_pt);
     // Sum of the absolute values of the negative eigenvalues

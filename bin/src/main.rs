@@ -7,10 +7,7 @@ use quira::QubitIndexing as QI;
 use quira::SingleQ::{Hadamard as H, PauliX as X, PauliZ as Z};
 use quira::TwoQ::ControlledNot as CNOT;
 
-use quira::density::*;
-
 fn main() {
-    test_linalg();
     let mut circuit = QC::new();
 
     let q = circuit.zeros(3);

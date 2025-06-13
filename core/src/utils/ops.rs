@@ -15,11 +15,13 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ndarray::{LinalgScalar};
+use ndarray::LinalgScalar;
 
 use crate::{Complex, Matrix};
 
-/// Kronecker product operation.
+/// Computes the Kronecker product of two square matrices a and b.
+/// Both matrices must be square of any dimension.
+/// Returns a matrix of size (a_dim * b_dim) x (a_dim * b_dim).
 pub fn kron<T>(a: &Matrix<T>, b: &Matrix<T>) -> Matrix<T>
 where
     T: LinalgScalar,
@@ -41,9 +43,33 @@ where
     result
 }
 
-/// Matrix dagger operation.
+/// Matrix dagger (conjugate tranpose) operation.
 pub fn dagger(u: &Matrix<Complex>) -> Matrix<Complex> {
     u.mapv(|x| x.conj()).t().to_owned()
 }
 
+// Matrix partial transpose operation.
+pub fn partial_transpose<T>(matrix: &Matrix<T>, dim_a: usize, dim_b: usize) -> Matrix<T>
+where
+    T: LinalgScalar,
+{
+    let dim = dim_a * dim_b;
+    let (rows, cols) = matrix.dim();
+    assert_eq!((rows, cols), (dim, dim), "dimensions must match");
+    let mut result = Matrix::<T>::zeros((dim, dim));
+    for a1 in 0..dim_a {
+        for b1 in 0..dim_b {
+            for a2 in 0..dim_a {
+                for b2 in 0..dim_b {
+                    let from_row = a1 * dim_b + b1;
+                    let from_col = a2 * dim_b + b2;
+                    let to_row = a1 * dim_b + b2;
+                    let to_col = a2 * dim_b + b1;
 
+                    result[[to_row, to_col]] = matrix[[from_row, from_col]];
+                }
+            }
+        }
+    }
+    result
+}

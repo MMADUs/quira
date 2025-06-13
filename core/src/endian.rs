@@ -15,40 +15,16 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::types::{Complex, Matrix};
+use crate::{
+    ops,
+    types::{Complex, Matrix},
+};
 
 /// Qubit index ordering mode when applying unitary to quantum state.
 #[derive(Debug, Clone)]
 pub enum QubitIndexing {
     LittleEndian,
     BigEndian,
-}
-
-/// Computes the Kronecker product of two square matrices a and b.
-/// Both matrices must be square of any dimension.
-/// Returns a matrix of size (a_dim * b_dim) x (a_dim * b_dim).
-pub(crate) fn kronecker_product(a: &Matrix<Complex>, b: &Matrix<Complex>) -> Matrix<Complex> {
-    let a_dim = a.shape()[0];
-    let b_dim = b.shape()[0];
-    assert_eq!(a.shape()[1], a_dim, "Matrix a must be square");
-    assert_eq!(b.shape()[1], b_dim, "Matrix b must be square");
-    // Calculate dimension
-    let dim = a_dim * b_dim;
-    let mut result = Matrix::<Complex>::zeros((dim, dim));
-    // Tensor product
-    for i in 0..a_dim {
-        for j in 0..a_dim {
-            let a_ij = a[(i, j)];
-            // The block in the result matrix:
-            // rows [i*b_dim..(i+1)*b_dim), columns [j*b_dim..(j+1)*b_dim)
-            for k in 0..b_dim {
-                for l in 0..b_dim {
-                    result[(i * b_dim + k, j * b_dim + l)] = a_ij * b[(k, l)];
-                }
-            }
-        }
-    }
-    result
 }
 
 /// Builds a permutation matrix P of size 2^n x 2^n
@@ -113,14 +89,14 @@ pub(crate) fn expand_unitary(
     assert_eq!(u.shape(), &[1 << k, 1 << k], "Unitary must be 2^k x 2^k");
 
     let p = permutation_matrix(n, &targets);
-    let p_inv = p.t().mapv(|c| c.conj()).to_owned();
+    let p_dagger = ops::dagger(&p);
 
     let i = Matrix::<Complex>::eye(1 << (n - k));
 
     let u_kron = match indexing {
-        QubitIndexing::BigEndian => kronecker_product(&u, &i),
-        QubitIndexing::LittleEndian => kronecker_product(&i, &u),
+        QubitIndexing::BigEndian => ops::kron(&u, &i),
+        QubitIndexing::LittleEndian => ops::kron(&i, &u),
     };
 
-    p_inv.dot(&u_kron).dot(&p)
+    p_dagger.dot(&u_kron).dot(&p)
 }
