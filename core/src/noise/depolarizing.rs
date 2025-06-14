@@ -47,7 +47,7 @@ impl Depolarizing {
         // construct channel
         let kraus_ops = if prob.abs() < EPSILON {
             // Only Identity operator
-            vec![Identity::new(0).unitary_matrix()]
+            vec![Identity::new().unitary_matrix()]
         } else {
             let pauli_ops = Self::global_pauli_operators(num_qubits);
             Self::construct_kraus_operators(num_qubits, prob, &pauli_ops)
@@ -74,7 +74,7 @@ impl Depolarizing {
         // construct mixed channel
         let kraus_ops = if prob.abs() < EPSILON {
             // Only Identity
-            vec![Identity::new(0).unitary_matrix()]
+            vec![Identity::new().unitary_matrix()]
         } else {
             let num_target_qubits = target_qubits.len();
             let pauli_ops = Self::selective_pauli_operators(total_qubits, target_qubits);
@@ -151,7 +151,7 @@ impl Depolarizing {
     /// construct pauli operators for n-qubit depolarizing channel
     fn global_pauli_operators(num_qubits: usize) -> Vec<Matrix<Complex>> {
         let single_paulis = vec![
-            Identity::new(0).unitary_matrix(),
+            Identity::new().unitary_matrix(),
             PauliX::new(0).unitary_matrix(),
             PauliY::new(0).unitary_matrix(),
             PauliZ::new(0).unitary_matrix(),
@@ -184,7 +184,7 @@ impl Depolarizing {
         target_qubits: &[usize],
     ) -> Vec<Matrix<Complex>> {
         let single_paulis = vec![
-            Identity::new(0).unitary_matrix(),
+            Identity::new().unitary_matrix(),
             PauliX::new(0).unitary_matrix(),
             PauliY::new(0).unitary_matrix(),
             PauliZ::new(0).unitary_matrix(),

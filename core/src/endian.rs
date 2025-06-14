@@ -85,6 +85,10 @@ pub(crate) fn expand_unitary(
     u: &Matrix<Complex>,
     indexing: &QubitIndexing,
 ) -> Matrix<Complex> {
+    if targets.is_empty() {
+        return Matrix::eye(1 << n); // do nothing
+    }
+
     let k = targets.len();
     assert_eq!(u.shape(), &[1 << k, 1 << k], "Unitary must be 2^k x 2^k");
 

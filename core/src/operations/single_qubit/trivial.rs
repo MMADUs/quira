@@ -34,13 +34,11 @@ use ndarray::array;
 ///
 /// This gate leaves the quantum state completely unchanged. It's useful in quantum algorithms,
 /// error correction, and circuit design for padding or alignment purposes.
-pub struct Identity {
-    target: Qubit,
-}
+pub struct Identity;
 
 impl Identity {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new() -> Self {
+        Self
     }
 }
 
@@ -55,12 +53,12 @@ impl QuantumGate for Identity {
 
     /// returns the alias name representing the gate.
     fn name(&self) -> String {
-        format!("I(target={})", self.target)
+        format!("I")
     }
 
     /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+        vec![]
     }
 }
 

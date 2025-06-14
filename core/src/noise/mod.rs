@@ -17,3 +17,4 @@
 
 pub mod depolarizing;
 pub mod dephasing;
+pub mod flip;
