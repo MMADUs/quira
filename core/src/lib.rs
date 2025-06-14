@@ -34,6 +34,9 @@ pub use operations::*;
 pub mod density;
 pub use density::*;
 
+pub mod noise;
+pub use noise::*;
+
 pub mod utils;
 pub use utils::*;
 

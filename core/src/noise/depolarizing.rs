@@ -27,9 +27,9 @@ use crate::{
     utils::ops,
 };
 
-/// depolarizing noise channel
-/// general random noise by applying X, Y, Z randomly
-/// artifical but useful for theoretical noise resilience
+/// depolarizing noise channel  
+/// general random noise by applying Pauli X, Y, or Z gates uniformly  
+/// simulates complete loss of information due to uniform noise on all axes  
 pub struct Depolarizing {
     prob: f64,
     num_qubits: usize,
@@ -45,8 +45,14 @@ impl Depolarizing {
             "depolarizing probability must be 0.0 <= p <= 1.0"
         );
         // construct channel
-        let pauli_ops = Self::n_qubit_pauli_operators(num_qubits);
-        let kraus_ops = Self::construct_kraus_operators(num_qubits, prob, &pauli_ops);
+        let kraus_ops = if prob.abs() < EPSILON {
+            // Only Identity operator
+            vec![Identity::new(0).unitary_matrix()]
+        } else {
+            let pauli_ops = Self::global_pauli_operators(num_qubits);
+            Self::construct_kraus_operators(num_qubits, prob, &pauli_ops)
+        };
+
         Self {
             prob,
             num_qubits,
@@ -55,7 +61,7 @@ impl Depolarizing {
     }
 
     /// new mixed depolarizing channel that applies to specific qubits
-    pub fn multi_qubit_selective(total_qubits: usize, target_qubits: &[usize], prob: f64) -> Self {
+    pub fn new_selective(total_qubits: usize, target_qubits: &[usize], prob: f64) -> Self {
         assert!(!target_qubits.is_empty(), "target qubits cannot be empty");
         assert!(
             target_qubits.iter().all(|&q| q < total_qubits),
@@ -66,14 +72,25 @@ impl Depolarizing {
             "cannot have more target qubits than total qubits",
         );
         // construct mixed channel
-        let num_target_qubits = target_qubits.len();
-        let pauli_ops = Self::selective_pauli_operators(total_qubits, target_qubits);
-        let kraus_ops = Self::construct_kraus_operators(num_target_qubits, prob, &pauli_ops);
+        let kraus_ops = if prob.abs() < EPSILON {
+            // Only Identity
+            vec![Identity::new(0).unitary_matrix()]
+        } else {
+            let num_target_qubits = target_qubits.len();
+            let pauli_ops = Self::selective_pauli_operators(total_qubits, target_qubits);
+            Self::construct_kraus_operators(num_target_qubits, prob, &pauli_ops)
+        };
+
         Self {
             prob,
             num_qubits: total_qubits,
             kraus_ops,
         }
+    }
+
+    /// return the depolarizing channel probabilities
+    pub fn prob(&self) -> f64 {
+        self.prob
     }
 
     /// apply depolarizing channel to density
@@ -90,7 +107,7 @@ impl Depolarizing {
         density.apply_kraus_ops(&self.kraus_ops)
     }
 
-    /// get the index of the pauli operator as sample error according to the depolarizing channel
+    /// samples a pauli operator index according to a depolarizing channel.
     pub fn sample_error<R: Rng>(&self, rng: &mut R) -> usize {
         let r: f64 = rng.random();
         let num_paulis = 4_usize.pow(self.num_qubits as u32);
@@ -132,7 +149,7 @@ impl Depolarizing {
     }
 
     /// construct pauli operators for n-qubit depolarizing channel
-    fn n_qubit_pauli_operators(num_qubits: usize) -> Vec<Matrix<Complex>> {
+    fn global_pauli_operators(num_qubits: usize) -> Vec<Matrix<Complex>> {
         let single_paulis = vec![
             Identity::new(0).unitary_matrix(),
             PauliX::new(0).unitary_matrix(),
