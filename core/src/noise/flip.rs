@@ -41,17 +41,18 @@ pub struct Flip {
 impl Flip {
     /// create a new single pauli channel
     pub(crate) fn new_with_pauli(
-        num_qubits: usize, 
-        prob: f64, 
+        num_qubits: usize,
+        prob: f64,
         pauli_op: Matrix<Complex>,
-        name: &str
+        name: &str,
     ) -> Self {
         assert!(num_qubits > 0, "number of qubits must be positive");
         assert!(
             (0.0..=1.0).contains(&prob),
-            "{} probability must be 0.0 <= p <= 1.0", name
+            "{} probability must be 0.0 <= p <= 1.0",
+            name
         );
-        
+
         let kraus_ops = if prob.abs() < EPSILON {
             vec![Identity::new().unitary_matrix()]
         } else {
@@ -83,7 +84,7 @@ impl Flip {
             target_qubits.len() <= total_qubits,
             "cannot have more target qubits than total qubits",
         );
-        
+
         let kraus_ops = if prob.abs() < EPSILON {
             vec![Identity::new().unitary_matrix()]
         } else {
@@ -114,32 +115,54 @@ impl Flip {
         assert_eq!(
             density.dim(),
             expected_dim,
-            "density matrix dimension {} doesn't match expected dimension {} for {} qubit {} channel",
-            density.dim(),
+            "Expected density matrix of dim {}, got {}",
             expected_dim,
-            self.num_qubits,
-            self.channel_name,
+            density.dim()
         );
         density.apply_kraus_ops(&self.kraus_ops)
     }
 
     /// sample error for each qubit independently
-    pub fn sample_error<R: Rng>(&self, rng: &mut R) -> Vec<bool> {
-        (0..self.num_qubits)
-            .map(|_| rng.random::<f64>() < self.prob)
-            .collect()
+    pub fn sample_error<R: Rng>(&self, rng: &mut R) -> usize {
+        let mut index = 0;
+        for (i, _) in (0..self.num_qubits).enumerate() {
+            if rng.random::<f64>() < self.prob {
+                index |= 1 << i;
+            }
+        }
+        index
+    }
+
+    /// apply a specific kraus operator to the density matrix
+    pub fn apply_sampled_error(&self, density: &Density, index: usize) -> Density {
+        assert!(
+            index < self.kraus_ops.len(),
+            "kraus operator index {} out of bounds",
+            index
+        );
+        let k = &self.kraus_ops[index];
+        let k_rho = k.dot(density.matrix_as_ref());
+        let result = k_rho.dot(&ops::dagger(k));
+        Density::new(result)
+    }
+
+    /// samples a kraus operator and applies it to the density matrix
+    pub fn sample_and_apply<R: Rng>(&self, density: &Density, rng: &mut R) -> (usize, Density) {
+        let index = self.sample_error(rng);
+        let new_density = self.apply_sampled_error(density, index);
+        (index, new_density)
     }
 
     /// check if kraus operators satisfy the completeness relation
     pub fn verify_completeness(&self) -> bool {
         let dim = 1 << self.num_qubits;
         let mut sum = Matrix::<Complex>::zeros((dim, dim));
-        
+
         for kraus_op in &self.kraus_ops {
             let k_dagger = ops::dagger(&kraus_op);
             sum = sum + k_dagger.dot(kraus_op);
         }
-        
+
         for i in 0..dim {
             for j in 0..dim {
                 let expected = if i == j {
@@ -157,30 +180,30 @@ impl Flip {
 
     /// construct kraus operators for n-qubit single pauli channel
     fn construct_kraus_operators(
-        num_qubits: usize, 
-        prob: f64, 
-        pauli_op: Matrix<Complex>
+        num_qubits: usize,
+        prob: f64,
+        pauli_op: Matrix<Complex>,
     ) -> Vec<Matrix<Complex>> {
         let identity = Identity::new().unitary_matrix();
         let num_combinations = 1 << num_qubits; // 2^n combinations
         let mut kraus_ops = Vec::with_capacity(num_combinations);
-        
+
         for pattern in 0..num_combinations {
             let mut result = Matrix::from_elem((1, 1), Complex::new(1.0, 0.0));
             let mut coeff = Complex::new(1.0, 0.0);
-            
+
             for qubit in 0..num_qubits {
                 let has_error = (pattern >> qubit) & 1 == 1;
                 let gate = if has_error { &pauli_op } else { &identity };
                 let prob_factor = if has_error { prob } else { 1.0 - prob };
-                
+
                 result = ops::kron(&result, gate);
                 coeff *= Complex::new(prob_factor.sqrt(), 0.0);
             }
-            
+
             kraus_ops.push(&result * coeff);
         }
-        
+
         kraus_ops
     }
 
@@ -194,13 +217,14 @@ impl Flip {
         let identity = Identity::new().unitary_matrix();
         let num_combinations = 1 << target_qubits.len();
         let mut kraus_ops = Vec::with_capacity(num_combinations);
-        
+
         for pattern in 0..num_combinations {
             let mut result = Matrix::from_elem((1, 1), Complex::new(1.0, 0.0));
             let mut coeff = Complex::new(1.0, 0.0);
-            
+
             for qubit in 0..total_qubits {
-                let gate = if let Some(target_idx) = target_qubits.iter().position(|&q| q == qubit) {
+                let gate = if let Some(target_idx) = target_qubits.iter().position(|&q| q == qubit)
+                {
                     let has_error = (pattern >> target_idx) & 1 == 1;
                     let prob_factor = if has_error { prob } else { 1.0 - prob };
                     coeff *= Complex::new(prob_factor.sqrt(), 0.0);
@@ -208,13 +232,13 @@ impl Flip {
                 } else {
                     &identity
                 };
-                
+
                 result = ops::kron(&result, gate);
             }
-            
+
             kraus_ops.push(&result * coeff);
         }
-        
+
         kraus_ops
     }
 }
@@ -226,10 +250,10 @@ impl BitFlip {
     /// new global bit flip channel
     pub fn new(num_qubits: usize, prob: f64) -> Flip {
         Flip::new_with_pauli(
-            num_qubits, 
-            prob, 
+            num_qubits,
+            prob,
             PauliX::new(0).unitary_matrix(),
-            "bit flip"
+            "bit flip",
         )
     }
 
@@ -240,7 +264,7 @@ impl BitFlip {
             target_qubits,
             prob,
             PauliX::new(0).unitary_matrix(),
-            "bit flip"
+            "bit flip",
         )
     }
 }
@@ -252,10 +276,10 @@ impl PhaseFlip {
     /// new global phase flip channel
     pub fn new(num_qubits: usize, prob: f64) -> Flip {
         Flip::new_with_pauli(
-            num_qubits, 
-            prob, 
+            num_qubits,
+            prob,
             PauliZ::new(0).unitary_matrix(),
-            "phase flip"
+            "phase flip",
         )
     }
 
@@ -266,7 +290,7 @@ impl PhaseFlip {
             target_qubits,
             prob,
             PauliZ::new(0).unitary_matrix(),
-            "phase flip"
+            "phase flip",
         )
     }
 }
@@ -278,10 +302,10 @@ impl BitPhaseFlip {
     /// new global bit-phase flip channel
     pub fn new(num_qubits: usize, prob: f64) -> Flip {
         Flip::new_with_pauli(
-            num_qubits, 
-            prob, 
+            num_qubits,
+            prob,
             PauliY::new(0).unitary_matrix(),
-            "bit-phase flip"
+            "bit-phase flip",
         )
     }
 
@@ -292,7 +316,7 @@ impl BitPhaseFlip {
             target_qubits,
             prob,
             PauliY::new(0).unitary_matrix(),
-            "bit-phase flip"
+            "bit-phase flip",
         )
     }
 }

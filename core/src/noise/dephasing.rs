@@ -88,12 +88,10 @@ impl Dephasing {
         assert_eq!(
             density.dim(),
             expected_dim,
-            "Density matrix dimension {} doesn't match expected {} for {} qubits",
-            density.dim(),
+            "Expected density matrix of dim {}, got {}",
             expected_dim,
-            self.num_qubits
+            density.dim()
         );
-
         density.apply_kraus_ops(&self.kraus_ops)
     }
 
@@ -110,6 +108,28 @@ impl Dephasing {
             }
         }
         self.kraus_ops.len() - 1
+    }
+
+    /// apply a specific kraus operator to the density matrix
+    pub fn apply_sampled_error(&self, density: &Density, index: usize) -> Density {
+        assert!(
+            index < self.kraus_ops.len(),
+            "kraus operator index {} out of bounds",
+            index
+        );
+
+        let k = &self.kraus_ops[index];
+        let k_rho = k.dot(density.matrix_as_ref());
+        let result = k_rho.dot(&ops::dagger(k));
+
+        Density::new(result)
+    }
+
+    /// samples a kraus operator and applies it to the density matrix
+    pub fn sample_and_apply<R: Rng>(&self, density: &Density, rng: &mut R) -> (usize, Density) {
+        let index = self.sample_error(rng);
+        let new_density = self.apply_sampled_error(density, index);
+        (index, new_density)
     }
 
     /// Verify that Kraus operators satisfy completeness relation
