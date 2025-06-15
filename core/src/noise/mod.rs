@@ -15,6 +15,14 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+pub mod model;
 pub mod depolarizing;
+pub mod pauli;
 pub mod dephasing;
 pub mod flip;
+pub mod amp_damping;
+pub mod ph_damping;
+pub mod g_amp_damping;
+pub mod thermal_relax;
+pub mod readout_error;
+pub mod cross_talk;
