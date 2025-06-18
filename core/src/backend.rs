@@ -18,22 +18,25 @@
 use std::time::Instant;
 
 use crate::{
-    constant::{C_ONE, C_ZERO}, endian::QubitIndexing, kernel::{statevec::vecspace::StateVec, BackendOperation}, prelude::RunResult, types::Vector, QuantumCircuit, QuantumTokens, QubitToken
+    constant::{C_ONE, C_ZERO}, endian::QubitIndexing, kernel::QuantumState, prelude::RunResult, types::Vector, GateApplyExt, QuantumCircuit, QuantumTokens, QubitToken
 };
 
 use rayon::prelude::*;
 
-pub struct QuantumBackend {
+pub struct QuantumBackend<T: QuantumState + Clone> {
+    /// the selected kernel (quantum state)
+    kernel: T,
     /// executed quantum circuit.
     circuits: Vec<QuantumCircuit>,
     /// qubit indexing when applying to quantum state.
     qubit_indexing: QubitIndexing,
 }
 
-impl QuantumBackend {
-    /// Create a new quantum circuit.
-    pub fn new(indexing: QubitIndexing) -> Self {
+impl<T: QuantumState + Clone> QuantumBackend<T> {
+    /// create a new quantum backend with the given state.
+    pub fn new(state: T, indexing: QubitIndexing) -> Self {
         Self {
+            kernel: state,
             circuits: Vec::new(),
             qubit_indexing: indexing,
         }
@@ -67,6 +70,7 @@ impl QuantumBackend {
             .iter()
             .filter(|c| !c.registers_as_ref().is_empty())
             .count();
+
         if circuits_with_measurements == 0 {
             println!("\nWarning: No measurements defined in any circuit.");
         } else {
@@ -106,7 +110,7 @@ impl QuantumBackend {
                     .into_par_iter()
                     .map(|_shot| {
                         // Prepare circuit execution
-                        let mut statevec = StateVec::new();
+                        let mut qstate = self.kernel.clone();
                         let mut classical_register: Vec<Option<bool>> =
                             vec![None; circuit.registers_as_ref().len()];
                         // Apply quantum operation based on tokens.
@@ -115,27 +119,27 @@ impl QuantumBackend {
                                 QuantumTokens::Qubit(qb) => {
                                     match qb {
                                         QubitToken::FROM(vector) => {
-                                            statevec.expand_state(vector.clone());
+                                            qstate.expand_state(vector.clone());
                                         }
                                         QubitToken::ONES(num_qubits) => {
                                             // qubit representation in one state as vector = [0, 1]
                                             let ket_one = Vector::from_iter([C_ZERO, C_ONE]);
                                             for _ in 0..*num_qubits {
-                                                statevec.expand_state(ket_one.clone());
+                                                qstate.expand_state(ket_one.clone());
                                             }
                                         }
                                         QubitToken::ZEROS(num_qubits) => {
                                             // qubit representation in zero state as vector = [1, 0]
                                             let ket_zero = Vector::from_iter([C_ONE, C_ZERO]);
                                             for _ in 0..*num_qubits {
-                                                statevec.expand_state(ket_zero.clone());
+                                                qstate.expand_state(ket_zero.clone());
                                             }
                                         }
-                                        QubitToken::RESET => statevec = StateVec::new(),
+                                        QubitToken::RESET => qstate.reset_state(),
                                     }
                                 }
                                 QuantumTokens::Operations(ops) => {
-                                    ops.apply(&mut statevec, &self.qubit_indexing);
+                                    ops.apply(&mut qstate, &self.qubit_indexing);
                                 }
                                 QuantumTokens::Conditional((classical_bit, if_measured, ops)) => {
                                     // get classical measurement result
@@ -146,16 +150,16 @@ impl QuantumBackend {
                                     ));
                                     // conditionally apply
                                     if *if_measured == measured {
-                                        ops.apply(&mut statevec, &self.qubit_indexing);
+                                        ops.apply(&mut qstate, &self.qubit_indexing);
                                     }
                                 }
                                 QuantumTokens::Measurements((qubit, classical_bit)) => {
                                     // validate qubit size
-                                    if *qubit > statevec.num_qubits() {
+                                    if *qubit > qstate.num_qubits() {
                                         panic!("Measurement out of index for qubit: {}", qubit);
                                     }
                                     // apply measurement
-                                    let measured = statevec.measure_qubit(*qubit);
+                                    let measured = qstate.measure_qubit(*qubit);
                                     classical_register[*classical_bit] = Some(measured);
                                 }
                                 QuantumTokens::Barrier => {}

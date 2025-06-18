@@ -23,6 +23,7 @@ use crate::{
     utils::{eigen, ops},
 };
 
+#[derive(Clone)]
 pub struct Density {
     matrix: Matrix<Complex>,
     dim: usize,
@@ -133,6 +134,11 @@ impl Density {
             matrix: result,
             dim: self.dim(),
         }
+    }
+
+    /// Replace density matrix
+    pub(crate) fn replace_matrix(&mut self, matrix: Matrix<Complex>) {
+        self.matrix = matrix
     }
 
     /// Get reference to the density matrix

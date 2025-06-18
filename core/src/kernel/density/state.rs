@@ -18,10 +18,16 @@
 use ndarray_linalg::Scalar;
 use rand::Rng;
 
-use crate::{constant::EPSILON, kernel::{BackendOperation, QuantumState}, Complex, Matrix, Qubit, Vector};
+use crate::{
+    Complex, Matrix, Qubit, Vector,
+    constant::EPSILON,
+    kernel::{BackendOperation, QuantumDebugger, QuantumState},
+    ops,
+};
 
 use super::matrix::Density;
 
+#[derive(Clone)]
 pub struct DensityState {
     density: Density,
     num_qubits: usize,
@@ -34,6 +40,21 @@ impl DensityState {
             density: Density::new(Matrix::zeros((0, 0))),
             num_qubits: 0,
         }
+    }
+
+    /// replace existing density matrix
+    pub fn set(&mut self, matrix: Matrix<Complex>) {
+        let (rows, cols) = matrix.dim();
+        assert_eq!(rows, cols, "Hamiltonian must be square");
+
+        let num_qubits = (rows as f64).log2() as usize;
+        assert_eq!(
+            1 << num_qubits,
+            rows,
+            "Hamiltonian dimension must be 2^n for n qubits"
+        );
+
+        self.density = Density::new(matrix);
     }
 
     /// initialize from a pure state vector
@@ -106,33 +127,11 @@ impl DensityState {
         &self.density
     }
 
-    /// Get the probability of measuring a specific basis state
-    pub fn probability(&self, basis_state: usize) -> f64 {
-        let matrix = self.density.matrix_as_ref();
-        matrix[[basis_state, basis_state]].re()
-    }
-
     /// Get all basis state probabilities
-    pub fn density_probability(&self) -> Vec<f64> {
+    fn density_probability(&self) -> Vec<f64> {
         let matrix = self.density.matrix_as_ref();
         let dim = 1 << self.num_qubits;
         (0..dim).map(|i| matrix[[i, i]].re()).collect()
-    }
-
-    /// Get the probability distribution for a specific qubit
-    /// Returns [P(|0⟩), P(|1⟩)] for the specified qubit
-    pub fn qubit_state(&self, qubit_index: usize) -> [f64; 2] {
-        assert!(
-            qubit_index < self.num_qubits,
-            "Qubit index {} out of range (0-{})",
-            qubit_index,
-            self.num_qubits - 1
-        );
-
-        let prob_0 = self.calculate_measurement_probability(qubit_index, false);
-        let prob_1 = self.calculate_measurement_probability(qubit_index, true);
-
-        [prob_0, prob_1]
     }
 
     /// Calculate measurement probability for a qubit
@@ -202,14 +201,32 @@ impl DensityState {
 }
 
 impl QuantumState for DensityState {
-    type StateType = Matrix<Complex>;
+    /// return number of qubits
+    fn num_qubits(&self) -> usize {
+        self.num_qubits()
+    }
 
-    fn state_as_ref(&self) -> &Self::StateType {
-        &self.density_as_ref().matrix_as_ref()
+    /// Apply this gate to the given quantum state
+    fn apply(&mut self, u: Matrix<Complex>) {
+        let current_state = self.density_as_ref().matrix_as_ref();
+        let u_dagger = ops::dagger(&u);
+        let new_state = u.dot(current_state).dot(&u_dagger);
+        self.set(new_state);
+    }
+
+    /// Dynamic boxed clone
+    fn box_clone(&self) -> Box<dyn QuantumState> {
+        Box::new(self.clone())
     }
 }
 
 impl BackendOperation for DensityState {
+    /// reset the state vector
+    fn reset_state(&mut self) {
+        let matrix = Matrix::zeros((0, 0));
+        self.density.replace_matrix(matrix);
+    }
+
     /// Expand the system by adding a new qubit in a given state
     fn expand_state(&mut self, qubit_state: Vector<Complex>) {
         assert_eq!(qubit_state.len(), 2, "Qubit state must be 2-dimensional");
@@ -305,5 +322,59 @@ impl BackendOperation for DensityState {
         self.collapse_to_classical_state(measured_state);
 
         outcomes
+    }
+}
+
+impl QuantumDebugger for DensityState {
+    type StateType = Matrix<Complex>;
+    type BitStateType = Complex; // Diagonal element (probability as real part)
+    type QubitStateType = (f64, f64); // (prob_0, prob_1) pair - real probabilities
+
+    /// Returns the entire density matrix
+    fn entire_state(&self, _filter_zero: bool) -> Self::StateType {
+        self.density.matrix_as_ref().clone()
+    }
+
+    /// Returns the diagonal element (probability) for a specific computational basis state
+    /// Following Qiskit: diagonal elements are the probabilities
+    fn bit_state(&self, bits: &[bool]) -> Self::BitStateType {
+        let num_qubits = self.num_qubits();
+        if bits.len() != num_qubits {
+            panic!(
+                "Error: Expected {} bits for {}-qubit system, got {}",
+                num_qubits,
+                num_qubits,
+                bits.len()
+            );
+        }
+
+        // Convert boolean array to state index
+        let mut state_index = 0;
+        for (i, &bit) in bits.iter().enumerate() {
+            if bit {
+                state_index |= 1 << i;
+            }
+        }
+
+        // Return the diagonal element (which contains the probability in the real part)
+        let matrix = self.density.matrix_as_ref();
+        matrix[[state_index, state_index]]
+    }
+
+    /// Returns (prob_0, prob_1) marginal probabilities for a specific qubit
+    /// Following Qiskit: return actual probabilities, not complex amplitudes
+    fn qubit_state(&self, qubit: Qubit) -> Self::QubitStateType {
+        let num_qubits = self.num_qubits();
+        if qubit >= num_qubits {
+            panic!(
+                "Error: Qubit index {} out of range. System has {} qubits.",
+                qubit, num_qubits
+            );
+        }
+
+        let prob_0 = self.calculate_measurement_probability(qubit, false);
+        let prob_1 = self.calculate_measurement_probability(qubit, true);
+
+        (prob_0, prob_1)
     }
 }

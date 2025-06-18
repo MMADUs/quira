@@ -23,6 +23,9 @@ pub use circuit::*;
 pub mod backend;
 pub use backend::*;
 
+pub mod simulator;
+pub use simulator::*;
+
 pub mod constant;
 
 pub mod operations;

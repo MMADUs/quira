@@ -30,5 +30,5 @@ pub type Vector<T> = Array1<T>;
 /// Mathematical structure for 2d tensor (Matrix)
 pub type Matrix<T> = Array2<T>;
 
-/// Mathematical structure for 3d tensor (Tensor)
+/// Mathematical structure for any N dim tensor (Tensor)
 pub type Tensor<T> = Array3<T>;

@@ -17,6 +17,5 @@
 
 pub mod matrix;
 pub mod state;
-pub mod simulator;
 pub mod qinfo;
 pub mod noise;

@@ -15,8 +15,9 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::Matrix;
 use crate::constant::{C_ONE, C_ZERO, EPSILON};
-use crate::kernel::{BackendOperation, QuantumState};
+use crate::kernel::{BackendOperation, QuantumDebugger, QuantumState};
 use crate::prelude::QubitState;
 use crate::types::{Complex, Qubit, Vector};
 use ndarray_linalg::Scalar;
@@ -190,14 +191,30 @@ impl StateVec {
 }
 
 impl QuantumState for StateVec {
-    type StateType = Vector<Complex>;
+    /// return number of qubits
+    fn num_qubits(&self) -> usize {
+        self.num_qubits()
+    }
 
-    fn state_as_ref(&self) -> &Self::StateType {
-        self.amplitudes_as_ref()
+    /// Apply this gate to the given quantum state
+    fn apply(&mut self, u: Matrix<Complex>) {
+        let current_state = self.amplitudes_as_ref();
+        let new_state = u.dot(current_state);
+        self.set(new_state);
+    }
+
+    /// Dynamic boxed clone
+    fn box_clone(&self) -> Box<dyn QuantumState> {
+        Box::new(self.clone())
     }
 }
 
 impl BackendOperation for StateVec {
+    /// reset the state vector
+    fn reset_state(&mut self) {
+        self.amplitudes = Vector::from(Vec::new())
+    }
+
     /// Expanding the current state vector by kronecker product
     fn expand_state(&mut self, state: Vector<Complex>) {
         if self.is_empty() {
@@ -274,5 +291,74 @@ impl BackendOperation for StateVec {
         }
 
         outcomes
+    }
+}
+
+// Implementation for StateVec
+impl QuantumDebugger for StateVec {
+    type StateType = Vector<Complex>;
+    type BitStateType = Complex;
+    type QubitStateType = (Complex, Complex);
+
+    /// Returns the entire amplitude vector
+    fn entire_state(&self, filter_zero: bool) -> Self::StateType {
+        if filter_zero {
+            self.amplitudes
+                .iter()
+                .filter(|amp| amp.norm_sqr() > 1e-12)
+                .cloned()
+                .collect()
+        } else {
+            self.amplitudes.iter().cloned().collect()
+        }
+    }
+
+    /// Returns the amplitude for a specific computational basis state
+    fn bit_state(&self, bits: &[bool]) -> Self::BitStateType {
+        let num_qubits = self.num_qubits();
+        if bits.len() != num_qubits {
+            panic!(
+                "Error: Expected {} bits for {}-qubit system, got {}",
+                num_qubits,
+                num_qubits,
+                bits.len()
+            );
+        }
+
+        // Convert boolean array to state index
+        let mut state_index = 0;
+        for (i, &bit) in bits.iter().enumerate() {
+            if bit {
+                state_index |= 1 << i;
+            }
+        }
+
+        self.amplitudes[state_index]
+    }
+
+    /// Returns (amp_0, amp_1) marginal amplitudes for a specific qubit
+    fn qubit_state(&self, qubit: Qubit) -> Self::QubitStateType {
+        let num_qubits = self.num_qubits();
+        if qubit >= num_qubits {
+            panic!(
+                "Error: Qubit index {} out of range. System has {} qubits.",
+                qubit, num_qubits
+            );
+        }
+
+        // Calculate marginal amplitudes for |0⟩ and |1⟩
+        let mut amp_0 = Complex::new(0.0, 0.0);
+        let mut amp_1 = Complex::new(0.0, 0.0);
+
+        for (i, amp) in self.amplitudes.iter().enumerate() {
+            let qubit_bit = (i >> qubit) & 1;
+            if qubit_bit == 0 {
+                amp_0 += amp;
+            } else {
+                amp_1 += amp;
+            }
+        }
+
+        (amp_0, amp_1)
     }
 }
