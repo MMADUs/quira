@@ -3,7 +3,7 @@ pub mod two_qubit;
 
 use crate::{
     endian::{QubitIndexing, expand_unitary},
-    statevec::QuantumStateVec,
+    kernel::statevec::vecspace::StateVec,
     types::{Complex, Matrix, Qubit},
 };
 
@@ -18,7 +18,7 @@ pub trait QuantumGate: Send + Sync {
     fn construct_targets(&self) -> Vec<Qubit>;
 
     /// Apply this gate to the given quantum state
-    fn apply(&self, state: &mut QuantumStateVec, indexing: &QubitIndexing) {
+    fn apply(&self, state: &mut StateVec, indexing: &QubitIndexing) {
         let n = state.num_qubits();
         let targets = self.construct_targets();
         let unitary = self.unitary_matrix();

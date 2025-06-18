@@ -24,7 +24,7 @@ use crate::{
     Complex, Matrix, QuantumGate,
     SingleQ::Identity,
     constant::{BOLTZMANN, EPSILON, INF, PLANCK},
-    matrix::Density,
+    kernel::density::matrix::Density,
     utils::ops,
 };
 
@@ -368,63 +368,80 @@ impl ThermalRelaxation {
         (p1, p2, p_excited)
     }
 
-    /// Create single-qubit thermal relaxation Kraus operators
+    /// Create single-qubit thermal relaxation Kraus operators (canonical standard form)
     ///
-    /// The operators combine amplitude damping and pure dephasing:
-    /// K₀ = √(1-p_ex) * √((1-p₁)(1-p₂)) * |0⟩⟨0| + √(1-p_ex) * √((1-p₁)) * √(1-p₂) * |1⟩⟨1|
-    /// K₁ = √(1-p_ex) * √(p₁) * |0⟩⟨1|  (amplitude damping from excited)
-    /// K₂ = √(1-p_ex) * √((1-p₁)) * √(p₂) * |1⟩⟨1|  (pure dephasing of excited)
-    /// K₃ = √(p_ex) * √((1-p₁)(1-p₂)) * |1⟩⟨1| + √(p_ex) * √((1-p₁)) * √(1-p₂) * |0⟩⟨0|
-    /// K₄ = √(p_ex) * √(p₁) * |1⟩⟨0|  (thermal excitation)
-    /// K₅ = √(p_ex) * √((1-p₁)) * √(p₂) * |0⟩⟨0|  (pure dephasing of ground)
-    /// K₆ = √((1-p₁)) * √(p₂) * (-1) * |0⟩⟨0|  (phase flip ground)
-    /// K₇ = √((1-p₁)) * √(p₂) * (-1) * |1⟩⟨1|  (phase flip excited)
+    /// This is the canonical generalized amplitude damping channel from Nielsen & Chuang
+    /// (Eq. 8.79-8.82) which models thermal relaxation at finite temperature.
+    ///
+    /// The 4 canonical Kraus operators are:
+    /// K₀ = (√(1-p)  0    )     K₁ = (0  √((1-p)γ))
+    ///      (0       √(1-γ))          (0  0        )
+    ///
+    /// K₂ = (0  0)              K₃ = (√p      0    )
+    ///      (√(pγ) 0)                 (0    √((1-γ)))
+    ///
+    /// where:
+    /// - γ = 1 - exp(-Γt) is the amplitude damping probability
+    /// - p = n̄/(n̄+1) is the thermal excitation probability  
+    /// - n̄ is the mean thermal photon number
+    ///
+    /// For dephasing, we add a separate Z-rotation channel.
     fn single_qubit_kraus_ops(p1: f64, p2: f64, p_excited: f64) -> Vec<Matrix<Complex>> {
         let mut ops = Vec::new();
 
-        let sqrt_p1 = p1.sqrt();
-        let sqrt_1_minus_p1 = (1.0 - p1).sqrt();
-        let sqrt_p2 = p2.sqrt();
-        let sqrt_1_minus_p2 = (1.0 - p2).sqrt();
-        let sqrt_p_ex = p_excited.sqrt();
-        let sqrt_1_minus_p_ex = (1.0 - p_excited).sqrt();
+        let gamma = p1; // Amplitude damping probability γ
+        let p = p_excited; // Thermal excitation probability
 
-        // K₀: Ground state, no decay, no dephasing
+        // The 4 canonical operators for generalized amplitude damping:
+
+        // K₀: Partial preservation
         let mut k0 = Matrix::<Complex>::zeros((2, 2));
-        k0[[0, 0]] = Complex::new(sqrt_1_minus_p_ex * sqrt_1_minus_p1 * sqrt_1_minus_p2, 0.0);
-        k0[[1, 1]] = Complex::new(sqrt_1_minus_p_ex * sqrt_1_minus_p1 * sqrt_1_minus_p2, 0.0);
+        k0[[0, 0]] = Complex::new((1.0 - p).sqrt(), 0.0);
+        k0[[1, 1]] = Complex::new((1.0 - gamma).sqrt(), 0.0);
         ops.push(k0);
 
         // K₁: Amplitude damping |1⟩ → |0⟩
         let mut k1 = Matrix::<Complex>::zeros((2, 2));
-        k1[[0, 1]] = Complex::new(sqrt_1_minus_p_ex * sqrt_p1, 0.0);
+        k1[[0, 1]] = Complex::new(((1.0 - p) * gamma).sqrt(), 0.0);
         ops.push(k1);
 
-        // K₂: Pure dephasing (no amplitude change)
+        // K₂: Thermal excitation |0⟩ → |1⟩
         let mut k2 = Matrix::<Complex>::zeros((2, 2));
-        k2[[0, 0]] = Complex::new(sqrt_1_minus_p_ex * sqrt_1_minus_p1 * sqrt_p2, 0.0);
-        k2[[1, 1]] = Complex::new(-sqrt_1_minus_p_ex * sqrt_1_minus_p1 * sqrt_p2, 0.0);
+        k2[[1, 0]] = Complex::new((p * gamma).sqrt(), 0.0);
         ops.push(k2);
 
-        // K₃: Thermal excitation |0⟩ → |1⟩
+        // K₃: Thermal preservation
         let mut k3 = Matrix::<Complex>::zeros((2, 2));
-        k3[[1, 0]] = Complex::new(sqrt_p_ex * sqrt_p1, 0.0);
+        k3[[0, 0]] = Complex::new(p.sqrt(), 0.0);
+        k3[[1, 1]] = Complex::new((1.0 - gamma).sqrt(), 0.0);
         ops.push(k3);
 
-        // K₄: Thermal state, no decay, no dephasing
-        let mut k4 = Matrix::<Complex>::zeros((2, 2));
-        k4[[0, 0]] = Complex::new(sqrt_p_ex * sqrt_1_minus_p1 * sqrt_1_minus_p2, 0.0);
-        k4[[1, 1]] = Complex::new(sqrt_p_ex * sqrt_1_minus_p1 * sqrt_1_minus_p2, 0.0);
-        ops.push(k4);
+        // For pure dephasing, we use the standard phase damping channel
+        // This is applied as a separate channel in sequence
+        if p2 > 1e-12 {
+            // Apply dephasing to all existing operators
+            let lambda = p2; // Dephasing probability
+            let mut dephased_ops = Vec::new();
 
-        // K₅: Thermal dephasing
-        let mut k5 = Matrix::<Complex>::zeros((2, 2));
-        k5[[0, 0]] = Complex::new(sqrt_p_ex * sqrt_1_minus_p1 * sqrt_p2, 0.0);
-        k5[[1, 1]] = Complex::new(-sqrt_p_ex * sqrt_1_minus_p1 * sqrt_p2, 0.0);
-        ops.push(k5);
+            // For each existing Kraus operator, create dephased versions
+            for op in &ops {
+                // No dephasing version (multiply by √(1-λ))
+                let mut no_dephase = op.clone();
+                no_dephase *= Complex::new((1.0 - lambda).sqrt(), 0.0);
+                dephased_ops.push(no_dephase);
 
-        // Remove zero operators to reduce the number of Kraus operators
-        ops.retain(|op| op.iter().any(|&x| x.norm() > EPSILON));
+                // Dephasing version (apply Z gate, multiply by √λ)
+                let mut dephase = op.clone();
+                dephase[[1, 1]] *= Complex::new(-1.0, 0.0); // Z gate effect
+                dephase *= Complex::new(lambda.sqrt(), 0.0);
+                dephased_ops.push(dephase);
+            }
+
+            ops = dephased_ops;
+        }
+
+        // Remove negligible operators
+        ops.retain(|op| op.iter().any(|&x| x.norm() > 1e-12));
 
         ops
     }

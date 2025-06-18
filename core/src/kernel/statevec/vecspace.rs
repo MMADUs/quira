@@ -16,19 +16,22 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::constant::{C_ONE, C_ZERO, EPSILON};
+use crate::kernel::{BackendOperation, QuantumState};
 use crate::prelude::QubitState;
 use crate::types::{Complex, Qubit, Vector};
+use ndarray_linalg::Scalar;
+use num_complex::ComplexFloat;
 use rand::Rng;
 
 #[derive(Clone)]
 /// the quantum state is the representation for the entire state of the qubit
 /// the state is represented as a hilbert space.
-pub struct QuantumStateVec {
+pub struct StateVec {
     /// quantum amplitudes in complex vector
     amplitudes: Vector<Complex>,
 }
 
-impl QuantumStateVec {
+impl StateVec {
     /// Initialize empty state
     pub fn new() -> Self {
         Self {
@@ -62,22 +65,6 @@ impl QuantumStateVec {
         qs.normalize();
         qs
     }
-    
-    /// Expanding the current state vector by kronecker product
-    pub fn expand_state(&mut self, state: Vector<Complex>) {
-        if self.is_empty() {
-            self.amplitudes = Self::from(state).amplitudes;
-            return;
-        }
-        let mut new_amplitudes = Vec::with_capacity(self.amplitudes.len() * state.len());
-        for &a in self.amplitudes.iter() {
-            for &b in state.iter() {
-                new_amplitudes.push(a * b)
-            }
-        }
-        self.amplitudes = Vector::from(new_amplitudes);
-        self.normalize();
-    }
 
     /// Returns the number of qubits (log2 of dimension).
     pub fn num_qubits(&self) -> usize {
@@ -93,16 +80,11 @@ impl QuantumStateVec {
         &self.amplitudes
     }
 
-    /// Get the probability amplitude for a specific basis state
-    pub fn amplitude(&self, basis_state: usize) -> Complex {
-        self.amplitudes[basis_state]
-    }
-
     /// Calculate the probability of measuring a specific basis state
     pub fn probability(&self, basis_state: usize) -> f64 {
         let amplitude = self.amplitudes[basis_state];
         // P(i) = |α[i]|^2 = α[i] * α[i]^*
-        (amplitude * amplitude.conj()).re
+        (amplitude * amplitude.conj()).re()
     }
 
     /// Calculate the state vector norm (length)
@@ -110,7 +92,7 @@ impl QuantumStateVec {
         // ∥∣ψ⟩∥ = sqrt(sum(P(i)))
         self.amplitudes
             .iter()
-            .map(|amp| (amp * amp.conj()).re)
+            .map(|amp| (amp * amp.conj()).re())
             .sum::<f64>()
             .sqrt()
     }
@@ -123,58 +105,6 @@ impl QuantumStateVec {
             // replace every element by x/norm
             self.amplitudes.mapv_inplace(|x| x / norm);
         }
-    }
-
-    /// Return the inner product with another qubit.
-    pub fn inner_product(&self, other: &QuantumStateVec) -> Complex {
-        self.amplitudes.dot(&other.amplitudes)
-    }
-
-    /// Measure all qubits and collapse the state
-    pub fn measure_all(&mut self) -> usize {
-        let mut rng = rand::rng();
-        // gen rand num between 0 and 1
-        let rand_val: f64 = rng.random();
-        // calculate cumlative probabilities
-        let mut cumlative_prob = 0.0;
-        for (idx, amplitude) in self.amplitudes.iter().enumerate() {
-            cumlative_prob += (amplitude * amplitude.conj()).re;
-            if cumlative_prob > rand_val {
-                // collapse state to measured basis state
-                let mut new_amplitudes = Vector::zeros(self.amplitudes.len());
-                new_amplitudes[idx] = C_ONE;
-                self.amplitudes = new_amplitudes;
-                return idx;
-            }
-        }
-        self.amplitudes.len() - 1
-    }
-
-    /// Measure a specific qubit and collapse the state accordingly
-    pub fn measure_qubit(&mut self, qubit: usize) -> bool {
-        if qubit >= self.num_qubits() {
-            panic!("Qubit index out of range");
-        }
-        let mut rng = rand::rng();
-        // calculate probability measuring |1⟩
-        let mut prob_one = 0.0;
-        for i in 0..self.amplitudes.len() {
-            if (i & (1 << qubit)) != 0 {
-                prob_one += (self.amplitudes[i] * self.amplitudes[i].conj()).re;
-            }
-        }
-        // choose outcome based on probability
-        let outcome = rng.random::<f64>() < prob_one;
-        // collapse state based on measurement
-        for i in 0..self.amplitudes.len() {
-            let bit_is_set = (i & (1 << qubit)) != 0;
-            if bit_is_set != outcome {
-                self.amplitudes[i] = C_ZERO;
-            }
-        }
-        // renormalize
-        self.normalize();
-        outcome
     }
 
     /// Return the quantum state as formatted strings.
@@ -197,8 +127,8 @@ impl QuantumStateVec {
                     "[{}] |{}⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
                     i,
                     bin,
-                    amp.re,
-                    amp.im,
+                    amp.re(),
+                    amp.im(),
                     prob,
                     prob * 100.0
                 )
@@ -237,15 +167,15 @@ impl QuantumStateVec {
 
         println!(
             "|0⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
-            amp_0.re,
-            amp_0.im,
+            amp_0.re(),
+            amp_0.im(),
             prob_0,
             prob_0 * 100.0
         );
         println!(
             "|1⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
-            amp_1.re,
-            amp_1.im,
+            amp_1.re(),
+            amp_1.im(),
             prob_1,
             prob_1 * 100.0
         );
@@ -256,5 +186,93 @@ impl QuantumStateVec {
             prob_0,
             prob_1,
         }
+    }
+}
+
+impl QuantumState for StateVec {
+    type StateType = Vector<Complex>;
+
+    fn state_as_ref(&self) -> &Self::StateType {
+        self.amplitudes_as_ref()
+    }
+}
+
+impl BackendOperation for StateVec {
+    /// Expanding the current state vector by kronecker product
+    fn expand_state(&mut self, state: Vector<Complex>) {
+        if self.is_empty() {
+            self.amplitudes = Self::from(state).amplitudes;
+            return;
+        }
+        let mut new_amplitudes = Vec::with_capacity(self.amplitudes.len() * state.len());
+        for &a in self.amplitudes.iter() {
+            for &b in state.iter() {
+                new_amplitudes.push(a * b)
+            }
+        }
+        self.amplitudes = Vector::from(new_amplitudes);
+        self.normalize();
+    }
+
+    /// Measure a specific qubit and collapse the state accordingly
+    fn measure_qubit(&mut self, qubit: Qubit) -> bool {
+        if qubit >= self.num_qubits() {
+            panic!("Qubit index out of range");
+        }
+        let mut rng = rand::rng();
+        // calculate probability measuring |1⟩
+        let mut prob_one = 0.0;
+        for i in 0..self.amplitudes.len() {
+            if (i & (1 << qubit)) != 0 {
+                prob_one += (self.amplitudes[i] * self.amplitudes[i].conj()).re;
+            }
+        }
+        // choose outcome based on probability
+        let outcome = rng.random::<f64>() < prob_one;
+        // collapse state based on measurement
+        for i in 0..self.amplitudes.len() {
+            let bit_is_set = (i & (1 << qubit)) != 0;
+            if bit_is_set != outcome {
+                self.amplitudes[i] = C_ZERO;
+            }
+        }
+        // renormalize
+        self.normalize();
+        outcome
+    }
+
+    /// Measure all qubits and collapse the state
+    fn measure_all(&mut self) -> Vec<bool> {
+        let mut rng = rand::rng();
+        // Generate random number between 0 and 1
+        let rand_val: f64 = rng.random();
+
+        // Calculate cumulative probabilities
+        let mut cumulative_prob = 0.0;
+        let mut measured_state_idx = 0;
+
+        for (idx, amplitude) in self.amplitudes.iter().enumerate() {
+            cumulative_prob += (amplitude * amplitude.conj()).re;
+            if cumulative_prob > rand_val {
+                measured_state_idx = idx;
+                break;
+            }
+        }
+
+        // Collapse state to measured basis state
+        let mut new_amplitudes = Vector::zeros(self.amplitudes.len());
+        new_amplitudes[measured_state_idx] = C_ONE;
+        self.amplitudes = new_amplitudes;
+
+        // Convert the measured state index to individual qubit outcomes
+        let num_qubits = (self.amplitudes.len() as f64).log2() as usize;
+        let mut outcomes = Vec::with_capacity(num_qubits);
+
+        for qubit in 0..num_qubits {
+            let bit = (measured_state_idx >> qubit) & 1;
+            outcomes.push(bit == 1);
+        }
+
+        outcomes
     }
 }

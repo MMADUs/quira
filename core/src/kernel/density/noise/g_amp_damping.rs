@@ -24,7 +24,7 @@ use crate::{
     Complex, Matrix, QuantumGate,
     SingleQ::Identity,
     constant::{BOLTZMANN, EPSILON, INF, PLANCK},
-    matrix::Density,
+    kernel::density::matrix::Density,
     utils::ops,
 };
 

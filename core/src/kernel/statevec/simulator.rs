@@ -21,15 +21,17 @@ use crate::{
     QuantumCircuit, QuantumTokens, QubitToken,
     constant::{C_ONE, C_ZERO, EPSILON},
     endian::QubitIndexing,
+    kernel::BackendOperation,
     operations::QuantumGate,
     prelude::QubitState,
-    statevec::QuantumStateVec,
     types::{Complex, Qubit, Vector},
 };
 
+use super::vecspace::StateVec;
+
 pub struct QuantumSimulator {
     /// the quantum state vector.
-    statevec: QuantumStateVec,
+    statevec: StateVec,
     /// map of measurements
     /// set the final outcome location of the qubit by classical bit.
     /// (qubit -> classical_bit)
@@ -47,7 +49,7 @@ impl QuantumSimulator {
     /// Create a new quantum circuit.
     pub fn new(indexing: QubitIndexing) -> Self {
         Self {
-            statevec: QuantumStateVec::new(),
+            statevec: StateVec::new(),
             measurements: HashMap::new(),
             classical_register: HashMap::new(),
             collapsed_state: HashMap::new(),
@@ -137,7 +139,7 @@ impl QuantumSimulator {
 
     /// Empty the qubit state.
     pub fn reset(&mut self) {
-        self.statevec = QuantumStateVec::new()
+        self.statevec = StateVec::new()
     }
 
     /// Conditionally add a operation to the circuit.
@@ -229,7 +231,7 @@ impl QuantumSimulator {
                                 self.statevec.expand_state(ket_zero.clone());
                             }
                         }
-                        QubitToken::RESET => self.statevec = QuantumStateVec::new(),
+                        QubitToken::RESET => self.statevec = StateVec::new(),
                     }
                 }
                 QuantumTokens::Operations(ops) => {

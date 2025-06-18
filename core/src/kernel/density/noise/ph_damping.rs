@@ -21,7 +21,7 @@ use ndarray::arr1;
 use ndarray_linalg::{Scalar, Trace};
 use rand::Rng;
 
-use crate::{Complex, Matrix, constant::EPSILON, matrix::Density, ops};
+use crate::{Complex, Matrix, constant::EPSILON, kernel::density::matrix::Density, ops};
 
 /// Phase damping noise channel
 /// Models pure dephasing without energy loss (T2* process)

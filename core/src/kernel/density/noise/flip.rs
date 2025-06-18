@@ -25,7 +25,7 @@ use crate::{
     Complex, Matrix, QuantumGate,
     SingleQ::{Identity, PauliX, PauliY, PauliZ},
     constant::EPSILON,
-    matrix::Density,
+    kernel::density::matrix::Density,
     utils::ops,
 };
 

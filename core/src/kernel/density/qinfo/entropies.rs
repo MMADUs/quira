@@ -20,9 +20,8 @@ use ndarray_linalg::Scalar;
 use crate::{
     constant::{EPSILON, INF},
     eigen,
+    kernel::density::matrix::Density,
 };
-
-use super::matrix::Density;
 
 /// Shannon entropy in the computational basis (probabilities)
 pub fn shannon_entropy_probs<P>(probs: P) -> f64

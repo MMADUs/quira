@@ -19,7 +19,7 @@ use std::usize;
 
 use rand::Rng;
 
-use crate::{Complex, Matrix, constant::EPSILON, matrix::Density, ops};
+use crate::{Complex, Matrix, constant::EPSILON, kernel::density::matrix::Density, ops};
 
 /// dephasing noise channel
 /// general random noise by applying Z-phase flips randomly

@@ -17,9 +17,10 @@
 
 use ndarray_linalg::SVD;
 
-use crate::{Complex, Matrix, QuantumGate, SingleQ::PauliY, Vector, constant::EPSILON, eigen, ops};
-
-use super::matrix::Density;
+use crate::{
+    Complex, Matrix, QuantumGate, SingleQ::PauliY, Vector, constant::EPSILON, eigen,
+    kernel::density::matrix::Density, ops,
+};
 
 /// Concurrence for two-qubit states
 pub fn concurrence(density: &Density) -> f64 {

@@ -21,7 +21,8 @@ use ndarray_linalg::{Scalar, Trace};
 use rand::Rng;
 
 use crate::{
-    Complex, Matrix, QuantumGate, SingleQ::Identity, constant::EPSILON, matrix::Density, utils::ops,
+    Complex, Matrix, QuantumGate, SingleQ::Identity, constant::EPSILON,
+    kernel::density::matrix::Density, utils::ops,
 };
 
 /// Amplitude damping noise channel

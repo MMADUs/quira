@@ -18,12 +18,7 @@
 use std::time::Instant;
 
 use crate::{
-    QuantumCircuit, QuantumTokens, QubitToken,
-    constant::{C_ONE, C_ZERO},
-    endian::QubitIndexing,
-    prelude::RunResult,
-    statevec::QuantumStateVec,
-    types::Vector,
+    constant::{C_ONE, C_ZERO}, endian::QubitIndexing, kernel::{statevec::vecspace::StateVec, BackendOperation}, prelude::RunResult, types::Vector, QuantumCircuit, QuantumTokens, QubitToken
 };
 
 use rayon::prelude::*;
@@ -111,7 +106,7 @@ impl QuantumBackend {
                     .into_par_iter()
                     .map(|_shot| {
                         // Prepare circuit execution
-                        let mut statevec = QuantumStateVec::new();
+                        let mut statevec = StateVec::new();
                         let mut classical_register: Vec<Option<bool>> =
                             vec![None; circuit.registers_as_ref().len()];
                         // Apply quantum operation based on tokens.
@@ -136,7 +131,7 @@ impl QuantumBackend {
                                                 statevec.expand_state(ket_zero.clone());
                                             }
                                         }
-                                        QubitToken::RESET => statevec = QuantumStateVec::new(),
+                                        QubitToken::RESET => statevec = StateVec::new(),
                                     }
                                 }
                                 QuantumTokens::Operations(ops) => {

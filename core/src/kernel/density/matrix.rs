@@ -15,7 +15,7 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use ndarray_linalg::{Eigh, SVD, Scalar, Trace, UPLO};
+use ndarray_linalg::{Eigh, Scalar, Trace, UPLO};
 
 use crate::{
     constant::EPSILON,
@@ -302,62 +302,5 @@ impl Density {
             matrix: result,
             dim: new_dim,
         }
-    }
-
-    /// Trace distance (1/2) * ||ρ - σ||₁
-    pub fn trace_distance(&self, other: &Density) -> f64 {
-        assert_eq!(self.dim, other.dim, "dimensions must match");
-        let diff = &self.matrix - &other.matrix;
-        let svd = diff.svd(true, true).expect("SVD failed");
-        let singular_values = svd.1;
-        let trace_norm: f64 = singular_values.sum();
-        0.5 * trace_norm
-    }
-
-    /// Fidelity F(ρ, σ) = [Tr(√(√ρ σ √ρ))]^2
-    pub fn fidelity(&self, other: &Density) -> f64 {
-        assert_eq!(self.dim, other.dim, "dimensions must match");
-
-        if self.is_pure() && other.is_pure() {
-            // For pure states: F(ρ, σ) = Tr(ρσ) = |⟨ψ|φ⟩|²
-            let product = self.matrix.dot(&other.matrix);
-            let trace_val = product.trace().unwrap();
-            trace_val.norm_sqr()
-        } else {
-            // General case: Uhlmann fidelity
-            let sqrt_rho = eigen::matrix_sqrt(self.matrix_as_ref());
-            let product = sqrt_rho.dot(&other.matrix).dot(&sqrt_rho);
-            let eigenvals = eigen::eigen_values(&product);
-            // Fidelity = (∑ sqrt(λᵢ))²
-            let trace_sqrt = eigenvals
-                .iter()
-                .map(|val| val.re().max(0.0).sqrt()) // only real, non-negative eigenvalues
-                .sum::<f64>();
-            trace_sqrt * trace_sqrt
-        }
-    }
-
-    /// Bures distance d_B(ρ, σ) = √(2(1 - √F(ρ, σ)))
-    pub fn bures_distance(&self, other: &Density) -> f64 {
-        let fidelity = self.fidelity(other);
-        (2.0 * (1.0 - fidelity.sqrt())).sqrt()
-    }
-
-    /// Hilbert-Schmidt distance ||ρ - σ||_HS = √Tr((ρ - σ)²)
-    pub fn hilbert_schmidt_distance(&self, other: &Density) -> f64 {
-        assert_eq!(self.dim, other.dim, "dimensions must match");
-
-        let diff = &self.matrix - &other.matrix;
-        let diff_squared = diff.dot(&diff);
-        diff_squared.diag().sum().re.sqrt()
-    }
-
-    /// Operator norm (spectral norm) ||ρ - σ||_∞
-    pub fn operator_norm_distance(&self, other: &Density) -> f64 {
-        assert_eq!(self.dim, other.dim, "dimensions must match");
-
-        let diff = &self.matrix - &other.matrix;
-        let eigenvals = eigen::eigen_values(&diff);
-        eigenvals.iter().map(|&ev| ev.abs()).fold(0.0, f64::max)
     }
 }
