@@ -1,25 +1,27 @@
-//! Copyright (c) 2024-2025 Quira, Inc.
-//!
-//! This file is part of Quira
-//!
-//! This program is free software: you can redistribute it and/or modify
-//! it under the terms of the GNU Affero General Public License as published by
-//! the Free Software Foundation, either version 3 of the License, or
-//! (at your option) any later version.
-//!
-//! This program is distributed in the hope that it will be useful
-//! but WITHOUT ANY WARRANTY; without even the implied warranty of
-//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//! GNU Affero General Public License for more details.
-//!
-//! You should have received a copy of the GNU Affero General Public License
-//! along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/*
+Copyright (c) 2024-2025 Quira, Inc.
 
-use super::SingleQubitGate;
-use crate::constant::PI;
-use crate::operations::QuantumGate;
-use crate::types::{Complex, Matrix, Qubit};
+This file is part of Quira
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 use ndarray::array;
+
+use crate::operations::QuantumGate;
+use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
+use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
 
 #[derive(Debug, Clone)]
 /// Represents a generalized π (Pi) pulse quantum gate.
@@ -45,7 +47,6 @@ impl GPi {
 }
 
 impl QuantumGate for GPi {
-    /// construct the 2x2 matrix representing the gate.
     fn unitary_matrix(&self) -> Matrix<Complex> {
         let c: f64 = (self.theta).cos();
         let s: f64 = (self.theta).sin();
@@ -55,39 +56,39 @@ impl QuantumGate for GPi {
         ]
     }
 
-    /// returns the alias name representing the gate.
     fn name(&self) -> String {
         format!("GPi(target={}, theta={:.4})", self.target, self.theta)
     }
 
-    /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
         vec![self.target]
+    }
+
+    fn enumerated(&self) -> GateType {
+        GateType::SingleQubit(SingleQubitType::GPi(Self::new(
+            self.target,
+            self.theta,
+        )))
     }
 }
 
 impl SingleQubitGate for GPi {
-    /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         0.0
     }
 
-    /// returns the imaginary part of alpha
     fn alpha_im(&self) -> f64 {
         0.0
     }
 
-    /// returns the real part of beta
     fn beta_re(&self) -> f64 {
         (self.theta).sin()
     }
 
-    /// returns the imaginary part of beta
     fn beta_im(&self) -> f64 {
         (-1.0) * (self.theta).cos()
     }
 
-    /// returns the global phase
     fn global_phase(&self) -> f64 {
         PI / 2.0
     }
@@ -117,7 +118,6 @@ impl GPi2 {
 }
 
 impl QuantumGate for GPi2 {
-    /// construct the 2x2 matrix representing the gate.
     fn unitary_matrix(&self) -> Matrix<Complex> {
         let c: f64 = (self.theta).cos();
         let s: f64 = (self.theta).sin();
@@ -127,39 +127,39 @@ impl QuantumGate for GPi2 {
         ] / 2.0_f64.sqrt()
     }
 
-    /// returns the alias name representing the gate.
     fn name(&self) -> String {
         format!("GPi2(target={}, theta={:.4})", self.target, self.theta)
     }
 
-    /// construct targets for quantum state
     fn construct_targets(&self) -> Vec<Qubit> {
         vec![self.target]
+    }
+
+    fn enumerated(&self) -> GateType {
+        GateType::SingleQubit(SingleQubitType::GPi2(Self::new(
+            self.target,
+            self.theta,
+        )))
     }
 }
 
 impl SingleQubitGate for GPi2 {
-    /// returns the real part of alpha
     fn alpha_re(&self) -> f64 {
         1.0 / 2.0_f64.sqrt()
     }
 
-    /// returns the imaginary part of alpha
     fn alpha_im(&self) -> f64 {
         0.0
     }
 
-    /// returns the real part of beta
     fn beta_re(&self) -> f64 {
         (self.theta).sin() / 2.0_f64.sqrt()
     }
 
-    /// returns the imaginary part of beta
     fn beta_im(&self) -> f64 {
         (-1.0 * (self.theta).cos()) / 2.0_f64.sqrt()
     }
 
-    /// returns the global phase
     fn global_phase(&self) -> f64 {
         0.0
     }

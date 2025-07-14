@@ -1,19 +1,21 @@
-//! Copyright (c) 2024-2025 Quira, Inc.
-//!
-//! This file is part of Quira
-//!
-//! This program is free software: you can redistribute it and/or modify
-//! it under the terms of the GNU Affero General Public License as published by
-//! the Free Software Foundation, either version 3 of the License, or
-//! (at your option) any later version.
-//!
-//! This program is distributed in the hope that it will be useful
-//! but WITHOUT ANY WARRANTY; without even the implied warranty of
-//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//! GNU Affero General Public License for more details.
-//!
-//! You should have received a copy of the GNU Affero General Public License
-//! along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/*
+Copyright (c) 2024-2025 Quira, Inc.
+
+This file is part of Quira
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #[cfg(test)]
 mod tests;
@@ -21,20 +23,11 @@ mod tests;
 pub mod clifford;
 pub use clifford::*;
 
-pub mod non_clifford;
-pub use non_clifford::*;
-
 pub mod parameterized;
 pub use parameterized::*;
 
-pub mod special;
-pub use special::*;
-
-pub mod trivial;
-pub use trivial::*;
-
-pub mod universal;
-pub use universal::*;
+pub mod extra;
+pub use extra::*;
 
 /// single qubit gate operation.
 pub trait SingleQubitGate: Send + Sync {
@@ -55,49 +48,47 @@ pub trait SingleQubitGate: Send + Sync {
 }
 
 /// enum definitions
-pub enum SingleQubitOperation {
+pub enum SingleQubitType {
     // parameterized
-    RotateX,
-    RotateY,
-    RotateZ,
-    RotateXY,
-    U0Gate,
-    U1Gate,
-    U2Gate,
-    U3Gate,
-    XPowGate,
-    YPowGate,
-    ZPowGate,
-    PhasedXPowGate,
-    HPowGate,
-    RotateAroundSphericalAxis,
+    RotateX(RotateX),
+    RotateY(RotateY),
+    RotateZ(RotateZ),
+    RotateXY(RotateXY),
+    U0Gate(U0Gate),
+    U1Gate(U1Gate),
+    U2Gate(U2Gate),
+    U3Gate(U3Gate),
+    XPowGate(XPowGate),
+    YPowGate(YPowGate),
+    ZPowGate(ZPowGate),
+    PhasedXPowGate(PhasedXPowGate),
+    HPowGate(HPowGate),
+    RotateAroundSphericalAxis(RotateAroundSphericalAxis),
 
     // clifford
-    PauliX,
-    PauliY,
-    PauliZ,
-    SqrtPauliX,
-    InvSqrtPauliX,
-    SqrtPauliY,
-    InvSqrtPauliY,
-    Hadamard,
-    SGate,
-    InvSGate,
-    SXGate,
-    InvSXGate,
+    PauliX(PauliX),
+    PauliY(PauliY),
+    PauliZ(PauliZ),
+    SqrtPauliX(SqrtPauliX),
+    InvSqrtPauliX(InvSqrtPauliX),
+    SqrtPauliY(SqrtPauliY),
+    InvSqrtPauliY(InvSqrtPauliY),
+    Hadamard(Hadamard),
+    SGate(SGate),
+    InvSGate(InvSGate),
 
     // non-clifford
-    TGate,
-    InvTGate,
+    TGate(TGate),
+    InvTGate(InvTGate),
 
     // universal
-    UGate,
-    Arbitrary,
+    UGate(UGate),
+    Arbitrary(Arbitrary),
 
     // special
-    GPi,
-    GPi2,
+    GPi(GPi),
+    GPi2(GPi2),
 
     // trivial
-    Identity,
+    Identity(Identity),
 }
