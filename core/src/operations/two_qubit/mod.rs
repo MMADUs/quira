@@ -21,20 +21,11 @@ mod tests;
 pub mod clifford;
 pub use clifford::*;
 
-pub mod non_clifford;
-pub use non_clifford::*;
-
 pub mod parameterized;
 pub use parameterized::*;
 
-pub mod special;
-pub use special::*;
-
-pub mod trivial;
-pub use trivial::*;
-
-pub mod universal;
-pub use universal::*;
+pub mod extra;
+pub use extra::*;
 
 use super::QuantumGate;
 
@@ -46,38 +37,38 @@ pub struct KakDecomposition {
     pub u_after: Vec<Box<dyn QuantumGate>>,
 }
 
-pub enum TwoQubitOperation {
+pub enum TwoQubitType {
     // clifford
-    ControlledNot,
-    SWAP,
-    ISWAP,
-    FSWAP,
-    ControlledPauliY,
-    ControlledPauliZ,
-    EchoCrossResonance,
+    ControlledNot(ControlledNot),
+    SWAP(SWAP),
+    ISWAP(ISWAP),
+    FSWAP(FSWAP),
+    ControlledPauliY(ControlledPauliY),
+    ControlledPauliZ(ControlledPauliZ),
+    EchoCrossResonance(EchoCrossResonance),
     // todo!
     DoubleControlledNot,
     ControlledSqrtX,
     ControlledHadamard,
 
     // non-clifford
-    SqrtISWAP,
-    InvSqrtISWAP,
+    SqrtISWAP(SqrtISWAP),
+    InvSqrtISWAP(InvSqrtISWAP),
 
     // parameterized
-    PhaseShiftedControlledZ,
-    PhaseShiftedControlledPhase,
-    ControlledRotateX,
-    ControlledRotateXY,
-    XY,
-    ControlledPhaseShift,
-    VariableMSXX,
-    GivensRotation,
-    GivensRotationLittleEndian,
-    Bogoliubov,
-    PMInteraction,
-    ComplexPMInteraction,
-    SpinInteraction,
+    PhaseShiftedControlledZ(PhaseShiftedControlledZ),
+    PhaseShiftedControlledPhase(PhaseShiftedControlledPhase),
+    ControlledRotateX(ControlledRotateX),
+    ControlledRotateXY(ControlledRotateXY),
+    XY(XY),
+    ControlledPhaseShift(ControlledPhaseShift),
+    VariableMSXX(VariableMSXX),
+    GivensRotation(GivensRotation),
+    GivensRotationLittleEndian(GivensRotationLittleEndian),
+    Bogoliubov(Bogoliubov),
+    PMInteraction(PMInteraction),
+    ComplexPMInteraction(ComplexPMInteraction),
+    SpinInteraction(SpinInteraction),
     // todo!
     RotationXX,
     RotationYY,
@@ -97,7 +88,7 @@ pub enum TwoQubitOperation {
     CUGate,
 
     // special
-    MolmerSorensenXX,
-    Qsim,
-    Fsim,
+    MolmerSorensenXX(MolmerSorensenXX),
+    Qsim(Qsim),
+    Fsim(Fsim),
 }
