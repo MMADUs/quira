@@ -20,42 +20,75 @@ use std::collections::HashMap;
 use crate::{
     constant::{C_ONE, C_ZERO, EPSILON},
     operations::QuantumGate,
-    prelude::{QuantumTokens, QubitToken},
     types::{Complex, Qubit, Vector},
 };
 
+/// Qubit operation types
+pub enum QubitOperation {
+    FROM(Vector<Complex>),
+    ONES(usize),
+    ZEROS(usize),
+    RESET,
+}
+
+/// Quantum instructions type
+pub enum QuantumInstructions {
+    /// applying qubit to state
+    Qubit(QubitOperation),
+    /// apply gate operation
+    Operations(Box<dyn QuantumGate>),
+    /// conditionally apply gate operation
+    /// 'classical_bit', 'measured', 'operations'.
+    Conditional((usize, bool, Box<dyn QuantumGate>)),
+    /// qubit measurements
+    /// 'qubit_index', 'classical_bit'.
+    Measurements((Qubit, usize)),
+    /// measure all qubit
+    MeasureAll,
+    /// circuit barrier
+    Barrier,
+}
+
+/// The Quantum Circuit.
 pub struct QuantumCircuit {
     /// number of current qubits in circuit.
-    current_qubits: usize,
+    curr_n_qubits: usize,
     /// applied quantum operations.
-    operations: Vec<QuantumTokens>,
-    /// map of Measurements.
-    /// (qubit -> classical_bit)
-    registers: HashMap<Qubit, usize>,
+    operations: Vec<QuantumInstructions>,
+    /// quantum registers capacity
+    qreg: usize,
+    /// classical registers capacity
+    creg: usize,
 }
 
 impl QuantumCircuit {
     /// Create a new quantum circuit.
-    pub fn new() -> Self {
+    pub fn new(qreg: usize, creg: usize) -> Self {
         Self {
-            current_qubits: 0,
+            curr_n_qubits: 0,
             operations: Vec::new(),
-            registers: HashMap::new(),
+            qreg,
+            creg,
         }
     }
 
     /// Return the number of qubit in the circuit.
     pub fn num_qubits(&self) -> usize {
-        self.current_qubits
+        self.curr_n_qubits
     }
 
-    /// Return the reference of circuit registers.
-    pub(crate) fn registers_as_ref(&self) -> &HashMap<Qubit, usize> {
-        &self.registers
+    /// Return the number of classical register in the circuit.
+    pub fn num_classical_register(&self) -> usize {
+        self.creg
+    }
+
+    /// Return the number of quantum register in the circuit.
+    pub fn num_quantum_register(&self) -> usize {
+        self.qreg
     }
 
     /// Return the reference of circuit operations.
-    pub(crate) fn operations_as_ref(&self) -> &Vec<QuantumTokens> {
+    pub(crate) fn operations_as_ref(&self) -> &Vec<QuantumInstructions> {
         &self.operations
     }
 
@@ -100,31 +133,33 @@ impl QuantumCircuit {
 
         // Apply to circuit
         self.operations
-            .push(QuantumTokens::Qubit(QubitToken::FROM(state)));
-        self.current_qubits += 1;
+            .push(QuantumInstructions::Qubit(QubitOperation::FROM(state)));
+        self.curr_n_qubits += 1;
         self.num_qubits() - 1
     }
 
     /// Set the qubit state to |0..0⟩.
     pub fn zeros(&mut self, num_qubits: usize) -> Vec<Qubit> {
-        let start = self.current_qubits;
+        let start = self.curr_n_qubits;
         let end = start + num_qubits;
-        self.current_qubits = end;
+        self.curr_n_qubits = end;
 
         self.operations
-            .push(QuantumTokens::Qubit(QubitToken::ZEROS(num_qubits)));
+            .push(QuantumInstructions::Qubit(QubitOperation::ZEROS(
+                num_qubits,
+            )));
 
         (start..end).collect()
     }
 
     /// Set the qubit state to |1..1⟩.
     pub fn ones(&mut self, num_qubits: usize) -> Vec<Qubit> {
-        let start = self.current_qubits;
+        let start = self.curr_n_qubits;
         let end = start + num_qubits;
-        self.current_qubits = end;
+        self.curr_n_qubits = end;
 
         self.operations
-            .push(QuantumTokens::Qubit(QubitToken::ONES(num_qubits)));
+            .push(QuantumInstructions::Qubit(QubitOperation::ONES(num_qubits)));
 
         (start..end).collect()
     }
@@ -132,7 +167,7 @@ impl QuantumCircuit {
     /// Empty the qubit state.
     pub fn reset(&mut self) {
         self.operations
-            .push(QuantumTokens::Qubit(QubitToken::RESET))
+            .push(QuantumInstructions::Qubit(QubitOperation::RESET))
     }
 
     /// Conditionally add a operation to the circuit
@@ -144,7 +179,7 @@ impl QuantumCircuit {
         if if_measured != 1 && if_measured != 0 {
             panic!("measurement condition is only between 0 and 1.")
         }
-        self.operations.push(QuantumTokens::Conditional((
+        self.operations.push(QuantumInstructions::Conditional((
             classical_bit,
             if_measured != 0,
             Box::new(operation),
@@ -157,21 +192,25 @@ impl QuantumCircuit {
         O: QuantumGate + 'static,
     {
         self.operations
-            .push(QuantumTokens::Operations(Box::new(operation)))
+            .push(QuantumInstructions::Operations(Box::new(operation)))
     }
 
     /// Add a measurement operation at the end of circuit.
     pub fn measure(&mut self, qubit: Qubit, classical_bit: usize) {
-        if qubit > self.registers.capacity() {
-            panic!("Qubit index out of range");
+        if qubit > self.qreg || classical_bit > self.creg {
+            panic!("Registers out of range");
         }
-        self.registers.insert(qubit, classical_bit);
         self.operations
-            .push(QuantumTokens::Measurements((qubit, classical_bit)))
+            .push(QuantumInstructions::Measurements((qubit, classical_bit)))
+    }
+
+    /// Measure all qubits.
+    pub fn measure_all(&mut self) {
+        self.operations.push(QuantumInstructions::MeasureAll)
     }
 
     /// Add a barrier into circuit.
     pub fn barrier(&mut self) {
-        self.operations.push(QuantumTokens::Barrier)
+        self.operations.push(QuantumInstructions::Barrier)
     }
 }
