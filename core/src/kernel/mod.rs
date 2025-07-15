@@ -15,11 +15,11 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{Complex, Matrix, Qubit, Vector};
+use crate::{Complex, GateType, Matrix, Qubit, Vector};
 
 pub mod statevec;
 pub mod density;
-pub mod stabilizer;
+pub mod cstab;
 pub mod mps;
 
 /// every kernel (quantum state) implements backend operation
@@ -45,7 +45,7 @@ pub trait QuantumState: BackendOperation + Send + Sync {
     fn num_qubits(&self) -> usize;
 
     /// apply any N quantum gate to kernel
-    fn apply(&mut self, u: Matrix<Complex>);
+    fn apply(&mut self, u: Matrix<Complex>, enumerated: GateType);
 
     /// dynamic clone
     fn box_clone(&self) -> Box<dyn QuantumState>;

@@ -16,15 +16,20 @@
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 pub mod kernel;
+pub use kernel::statevec::statevec::StateVec;
+pub use kernel::density::state::DensityState;
 
 pub mod circuit;
 pub use circuit::*;
 
-pub mod backend;
-pub use backend::*;
+pub mod job;
+pub use job::*;
 
 pub mod simulator;
 pub use simulator::*;
+
+pub mod result;
+pub use result::*;
 
 pub mod constant;
 
@@ -35,9 +40,6 @@ pub use operations::*;
 
 pub mod utils;
 pub use utils::*;
-
-pub mod prelude;
-pub use prelude::*;
 
 pub mod types;
 pub use types::*;

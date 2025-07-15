@@ -1,19 +1,21 @@
-//! Copyright (c) 2024-2025 Quira, Inc.
-//!
-//! This file is part of Quira
-//!
-//! This program is free software: you can redistribute it and/or modify
-//! it under the terms of the GNU Affero General Public License as published by
-//! the Free Software Foundation, either version 3 of the License, or
-//! (at your option) any later version.
-//!
-//! This program is distributed in the hope that it will be useful
-//! but WITHOUT ANY WARRANTY; without even the implied warranty of
-//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//! GNU Affero General Public License for more details.
-//!
-//! You should have received a copy of the GNU Affero General Public License
-//! along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/*
+Copyright (c) 2024-2025 Quira, Inc.
+
+This file is part of Quira
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 use crate::{
     GateApplyExt, QuantumCircuit, QuantumInstructions, QubitOperation,
@@ -44,6 +46,11 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
         self.kernel.num_qubits()
     }
 
+    /// The kernel backend as ref
+    pub fn backend(&self) -> &T {
+        &self.kernel
+    }
+
     /// Get the current quantum state
     pub fn entire_state(&self, filter_zero: bool) -> T::StateType {
         self.kernel.entire_state(filter_zero)
@@ -61,7 +68,7 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
     }
 
     /// Simulate a quantum circuit.
-    pub fn from_circuit(&mut self, circuit: QuantumCircuit) {
+    pub fn from_circuit(&mut self, circuit: QuantumCircuit) -> &mut Self {
         let mut classical_register: Vec<Option<bool>> =
             vec![None; circuit.num_classical_register()];
         // Apply quantum operation based on tokens.
@@ -90,9 +97,23 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
                     }
                 }
                 QuantumInstructions::Operations(ops) => {
+                    if ops.construct_targets().len() > self.num_qubits() {
+                        panic!(
+                            "{} Qubit Operation tries to operate on {} Qubit",
+                            ops.construct_targets().len(),
+                            self.num_qubits()
+                        );
+                    }
                     ops.apply(&mut self.kernel, &self.qubit_indexing);
                 }
                 QuantumInstructions::Conditional((classical_bit, if_measured, ops)) => {
+                    if ops.construct_targets().len() > self.num_qubits() {
+                        panic!(
+                            "{} Qubit Operation tries to operate on {} Qubit",
+                            ops.construct_targets().len(),
+                            self.num_qubits()
+                        );
+                    }
                     // get classical measurement result
                     let measured = classical_register[*classical_bit];
                     let measured =
@@ -121,6 +142,7 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
                 QuantumInstructions::Barrier => {}
             }
         }
+        self
     }
 }
 

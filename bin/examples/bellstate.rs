@@ -3,37 +3,75 @@
 //!
 //! run example with: cargo run --example bellstate
 
-use quira::QuantumSimulator as QS;
-use quira::Qubit;
+use quira::QuantumCircuit;
+use quira::QuantumJob;
+use quira::QuantumSimulator as QuiraSimualtor;
 use quira::QubitIndexing as QI;
+use quira::kernel::QuantumDebugger;
 
 use quira::SingleQ::Hadamard as H;
+use quira::StateVec;
 use quira::TwoQ::ControlledNot as CNOT;
 
 fn main() {
-    // make a new quantum circuit
-    let mut qsim: QS = QS::new(QI::LittleEndian); // -> Qiskit uses Little Endian.
+    // build quantum circuit
+    //
+    let mut circuit = QuantumCircuit::new(2, 1);
 
-    // initialize zero state qubit
-    let q0: Qubit = qsim.qb_zero();
-    let q1: Qubit = qsim.qb_zero();
+    let q0 = circuit.qb_zero();
+    let q1 = circuit.qb_zero();
 
-    qsim.state_vec(false);
-    // [0] |00⟩: (amp = 1.0000 + 0.0000i) => (prob = 1.0000, 100.00%)
-    // [1] |01⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [2] |10⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [3] |11⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
+    circuit.add(H::new(q0));
+    circuit.add(CNOT::new(q0, q1));
 
-    // apply hadamard & controlled not
-    qsim.add(H::new(q0)); // -> superposition
-    qsim.add(CNOT::new(q0, q1)); // -> entanglement
+    // simulating quantum state
+    //
+    let backend = StateVec::new();
+    let mut sim = QuiraSimualtor::new(backend, QI::LittleEndian);
+    let state = sim.from_circuit(circuit).backend();
 
-    qsim.state_vec(true);
-    // [0] |00⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
-    // [3] |11⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
+    // debug state on simulation
+    //
+    for (bit, amplitude) in state.entire_state(false) {
+        println!("|{}>: {}", bit, amplitude);
+    }
 
-    let m0: bool = qsim.measure(q0, 0); // -> measure q0 to classical reg 0
-    let m1: bool = qsim.measure(q1, 1); // -> measure q1 to classical reg 1
+    let qs0 = state.qubit_state(q0);
+    let qs1 = state.qubit_state(q1);
 
-    println!("m0 = {}, m1 = {}", m0 as u8, m1 as u8); // -> superposition outcome
+    println!("qs0 = {}|0> + {}|1>", qs0.0, qs0.1);
+    println!("qs1 = {}|0> + {}|1>", qs1.0, qs1.1);
+
+    let bs = state.bit_state(&[false, false]); // |00>
+    println!("|00>: {}", bs);
+
+    // run measurement outcome
+    //
+    let mut circuit = QuantumCircuit::new(2, 1);
+
+    let q0 = circuit.qb_zero();
+    let q1 = circuit.qb_zero();
+
+    circuit.add(H::new(q0));
+    circuit.add(CNOT::new(q0, q1));
+    circuit.measure_all();
+
+    let backend = StateVec::new();
+    let mut job = QuantumJob::new(backend, QI::LittleEndian);
+    job.from_circuit(circuit);
+    job.run(1000);
+    let results = job.result();
+    for result in results.unwrap() {
+        for (bit, count) in result.get_counts() {
+            println!("{}: {}", bit, count);
+        }
+
+        let (mb, mc) = result.get_most_frequent().unwrap();
+        println!("|{}>: {}", mb, mc);
+
+        result.print_results();
+        println!("{}", result.histogram(20));
+    }
+
+    println!("hello quantum world!");
 }

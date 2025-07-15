@@ -15,12 +15,10 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::Matrix;
 use crate::constant::{C_ONE, C_ZERO, EPSILON};
 use crate::kernel::{BackendOperation, QuantumDebugger, QuantumState};
-use crate::prelude::QubitState;
 use crate::types::{Complex, Qubit, Vector};
-use ndarray_linalg::Scalar;
+use crate::{GateType, Matrix};
 use num_complex::ComplexFloat;
 use rand::Rng;
 
@@ -107,87 +105,6 @@ impl StateVec {
             self.amplitudes.mapv_inplace(|x| x / norm);
         }
     }
-
-    /// Return the quantum state as formatted strings.
-    pub fn get_amp_state(&self, filter_zero: bool) -> Vec<String> {
-        let num_qubits = self.num_qubits();
-        self.amplitudes
-            .iter()
-            .enumerate()
-            .filter(|(_, amp)| {
-                if filter_zero {
-                    amp.norm_sqr() > 1e-12
-                } else {
-                    true
-                }
-            })
-            .map(|(i, amp)| {
-                let prob = amp.norm_sqr();
-                let bin = format!("{:0width$b}", i, width = num_qubits);
-                format!(
-                    "[{}] |{}⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
-                    i,
-                    bin,
-                    amp.re(),
-                    amp.im(),
-                    prob,
-                    prob * 100.0
-                )
-            })
-            .collect()
-    }
-
-    /// Get specific state of a qubit
-    pub fn get_qubit_state(&self, qubit: Qubit) -> QubitState {
-        let num_qubits = self.num_qubits();
-
-        if qubit >= num_qubits {
-            panic!(
-                "\nError: Qubit index {} out of range. System has {} qubits.",
-                qubit, num_qubits
-            );
-        }
-
-        println!("\nQubit {} state:", qubit);
-
-        // Calculate marginal amplitudes for |0⟩ and |1⟩
-        let mut amp_0 = Complex::new(0.0, 0.0);
-        let mut amp_1 = Complex::new(0.0, 0.0);
-
-        for (i, amp) in self.amplitudes.iter().enumerate() {
-            let qubit_bit = (i >> qubit) & 1;
-            if qubit_bit == 0 {
-                amp_0 += amp;
-            } else {
-                amp_1 += amp;
-            }
-        }
-
-        let prob_0 = amp_0.norm_sqr();
-        let prob_1 = amp_1.norm_sqr();
-
-        println!(
-            "|0⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
-            amp_0.re(),
-            amp_0.im(),
-            prob_0,
-            prob_0 * 100.0
-        );
-        println!(
-            "|1⟩: (amp = {:.4} + {:.4}i) => (prob = {:.4}, {:.2}%)",
-            amp_1.re(),
-            amp_1.im(),
-            prob_1,
-            prob_1 * 100.0
-        );
-
-        QubitState {
-            amp_0,
-            amp_1,
-            prob_0,
-            prob_1,
-        }
-    }
 }
 
 impl QuantumState for StateVec {
@@ -197,7 +114,7 @@ impl QuantumState for StateVec {
     }
 
     /// Apply this gate to the given quantum state
-    fn apply(&mut self, u: Matrix<Complex>) {
+    fn apply(&mut self, u: Matrix<Complex>, _enumetared: GateType) {
         let current_state = self.amplitudes_as_ref();
         let new_state = u.dot(current_state);
         self.set(new_state);
@@ -296,20 +213,27 @@ impl BackendOperation for StateVec {
 
 // Implementation for StateVec
 impl QuantumDebugger for StateVec {
-    type StateType = Vector<Complex>;
+    type StateType = Vec<(String, Complex)>;
     type BitStateType = Complex;
     type QubitStateType = (Complex, Complex);
 
     /// Returns the entire amplitude vector
     fn entire_state(&self, filter_zero: bool) -> Self::StateType {
+        let num_qubits = (self.amplitudes.len() as f64).log2() as usize;
+
         if filter_zero {
             self.amplitudes
                 .iter()
-                .filter(|amp| amp.norm_sqr() > 1e-12)
-                .cloned()
+                .enumerate()
+                .filter(|(_, amp)| amp.norm_sqr() > 1e-12)
+                .map(|(i, amp)| (format!("{:0width$b}", i, width = num_qubits), *amp))
                 .collect()
         } else {
-            self.amplitudes.iter().cloned().collect()
+            self.amplitudes
+                .iter()
+                .enumerate()
+                .map(|(i, amp)| (format!("{:0width$b}", i, width = num_qubits), *amp))
+                .collect()
         }
     }
 
@@ -346,19 +270,24 @@ impl QuantumDebugger for StateVec {
             );
         }
 
-        // Calculate marginal amplitudes for |0⟩ and |1⟩
-        let mut amp_0 = Complex::new(0.0, 0.0);
-        let mut amp_1 = Complex::new(0.0, 0.0);
+        // Calculate marginal probabilities by summing |amplitude|^2 over other qubits
+        let mut prob_0 = 0.0;
+        let mut prob_1 = 0.0;
 
         for (i, amp) in self.amplitudes.iter().enumerate() {
             let qubit_bit = (i >> qubit) & 1;
+            let prob = amp.norm_sqr();
             if qubit_bit == 0 {
-                amp_0 += amp;
+                prob_0 += prob;
             } else {
-                amp_1 += amp;
+                prob_1 += prob;
             }
         }
 
-        (amp_0, amp_1)
+        // Convert probabilities back to amplitudes (assuming real and positive)
+        (
+            Complex::new(prob_0.sqrt(), 0.0),
+            Complex::new(prob_1.sqrt(), 0.0),
+        )
     }
 }

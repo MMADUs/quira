@@ -1,30 +1,36 @@
 //! Simulation TEST
 
-use quira::QuantumCircuit as QC;
-use quira::QuantumSimulator as QS;
+use quira::kernel::QuantumDebugger;
+use quira::*;
+use quira::QuantumCircuit;
+use quira::QuantumSimulator as QuiraSimulator;
 use quira::QubitIndexing as QI;
 
 use quira::SingleQ::{Hadamard as H, PauliX as X, PauliZ as Z};
 use quira::TwoQ::ControlledNot as CNOT;
 
 fn main() {
-    let mut circuit = QC::new();
+    let mut circuit_a = QuantumCircuit::new(1, 1);
+    let q0 = circuit_a.qb_zero();
+    circuit_a.add(H::new(q0));
 
-    let q = circuit.zeros(3);
+    let mut circuit_b = QuantumCircuit::new(0, 0);
+    circuit_b.add(H::new(q0));
 
-    circuit.add(H::new(q[0]));
-    circuit.add(H::new(q[1]));
-    circuit.add(CNOT::new(q[1], q[2]));
-    circuit.add(CNOT::new(q[0], q[1]));
-    circuit.add(H::new(q[0]));
-    circuit.measure(q[0], 0);
-    circuit.measure(q[1], 1);
-    circuit.cond_add(0, 1, X::new(q[2]));
-    circuit.cond_add(1, 1, Z::new(q[2]));
+    circuit_a.extend(circuit_b);
 
-    let mut simulator = QS::new(QI::LittleEndian);
-    simulator.from_circuit(circuit);
-    simulator.state_vec(true);
-    simulator.state_qubit(q[2]);
-    simulator.state_qubit(q[1]);
+    let backend = StateVec::new();
+    let mut sim = QuiraSimulator::new(backend, QI::LittleEndian);
+    let state = sim.from_circuit(circuit_a).backend();
+
+    for (bit, amplitude) in state.entire_state(false) {
+        println!("|{}>: {}", bit, amplitude);
+    }
 }
+
+// todo list
+// 1. refactor gate
+// 2. stabilizer & integration
+// 3. refactor noise channel
+// 4. quantum fourier transform
+// 5. back to the list on obsidian notes.

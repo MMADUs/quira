@@ -1,21 +1,21 @@
-//! Copyright (c) 2024-2025 Quira, Inc.
-//!
-//! This file is part of Quira
-//!
-//! This program is free software: you can redistribute it and/or modify
-//! it under the terms of the GNU Affero General Public License as published by
-//! the Free Software Foundation, either version 3 of the License, or
-//! (at your option) any later version.
-//!
-//! This program is distributed in the hope that it will be useful
-//! but WITHOUT ANY WARRANTY; without even the implied warranty of
-//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//! GNU Affero General Public License for more details.
-//!
-//! You should have received a copy of the GNU Affero General Public License
-//! along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/*
+Copyright (c) 2024-2025 Quira, Inc.
 
-use std::collections::HashMap;
+This file is part of Quira
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 use crate::{
     constant::{C_ONE, C_ZERO, EPSILON},
@@ -70,6 +70,14 @@ impl QuantumCircuit {
             qreg,
             creg,
         }
+    }
+
+    /// Merge another quantum circuit to this quantum circuit
+    pub fn extend(&mut self, cirucit: QuantumCircuit) {
+        self.curr_n_qubits += cirucit.curr_n_qubits;
+        self.operations.extend(cirucit.operations);
+        self.qreg += cirucit.qreg;
+        self.creg += cirucit.creg;
     }
 
     /// Return the number of qubit in the circuit.
