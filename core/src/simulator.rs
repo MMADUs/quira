@@ -134,10 +134,12 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
                 }
                 QuantumInstructions::MeasureAll => {
                     let measured = self.kernel.measure_all();
+                    let mut mreg: Vec<Option<bool>> = vec![None; measured.len()];
                     // map result automatically
                     for (i, measured_bit) in measured.iter().enumerate() {
-                        classical_register[i] = Some(*measured_bit);
+                        mreg[i] = Some(*measured_bit);
                     }
+                    classical_register = mreg;
                 }
                 QuantumInstructions::Barrier => {}
             }
