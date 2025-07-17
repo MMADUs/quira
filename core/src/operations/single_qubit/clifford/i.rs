@@ -19,9 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the Identity gate, which leaves the qubit state unchanged.
@@ -57,33 +58,11 @@ impl QuantumGate for Identity {
         format!("I")
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
+    fn construct_targets(&self) -> Vec<usize> {
         vec![]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::Identity(Self::new()))
-    }
-}
-
-impl SingleQubitGate for Identity {
-    fn alpha_re(&self) -> f64 {
-        1.0
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
     }
 }

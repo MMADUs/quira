@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
 use crate::operations::two_qubit::TwoQubitType;
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the Controlled-NOT (CNOT) gate, one of the most fundamental two-qubit gates.
@@ -46,13 +48,16 @@ use crate::{Complex, GateType, Matrix, Qubit};
 /// * `control` - The control qubit that determines whether the operation is applied
 /// * `target` - The target qubit that gets flipped when control is |1⟩
 pub struct ControlledNot {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
 }
 
 impl ControlledNot {
-    pub fn new(control: Qubit, target: Qubit) -> Self {
-        Self { control, target }
+    pub fn new(control: &QuantumBit, target: &QuantumBit) -> Self {
+        Self {
+            control: control.clone(),
+            target: target.clone(),
+        }
     }
 }
 
@@ -90,14 +95,14 @@ impl QuantumGate for ControlledNot {
         format!("CNOT(control={}, target={})", self.control, self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::ControlledNot(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
         )))
     }
 }

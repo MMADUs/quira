@@ -19,9 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
+use crate::bit::QuantumBit;
+use crate::constant::PI;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the Hadamard gate, a fundamental quantum gate.
@@ -36,16 +39,18 @@ use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
 ///
 /// The Hadamard gate is self-inverse: applying it twice results in the identity.
 pub struct Hadamard {
-    target: Qubit,
+    target: QuantumBit,
 }
 
 impl Hadamard {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new(target: &QuantumBit) -> Self {
+        Self {
+            target: target.clone(),
+        }
     }
 
     pub fn power(&self, exponent: f64) -> HPowGate {
-        HPowGate::new(self.target, exponent)
+        HPowGate::new(&self.target, exponent)
     }
 }
 
@@ -62,34 +67,12 @@ impl QuantumGate for Hadamard {
         format!("H(target={})", self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::Hadamard(Self::new(self.target)))
-    }
-}
-
-impl SingleQubitGate for Hadamard {
-    fn alpha_re(&self) -> f64 {
-        0.0
-    }
-
-    fn alpha_im(&self) -> f64 {
-        -1.0 / ((2.0_f64).sqrt())
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        -1.0 / ((2.0_f64).sqrt())
-    }
-
-    fn global_phase(&self) -> f64 {
-        PI / 2.0
+        GateType::SingleQubit(SingleQubitType::Hadamard(Self::new(&self.target)))
     }
 }
 
@@ -103,13 +86,16 @@ impl SingleQubitGate for Hadamard {
 ///
 /// When t=1, this reduces to the standard Hadamard gate.
 pub struct HPowGate {
-    target: Qubit,
+    target: QuantumBit,
     exponent: f64, // t parameter
 }
 
 impl HPowGate {
-    pub fn new(target: Qubit, exponent: f64) -> Self {
-        Self { target, exponent }
+    pub fn new(target: &QuantumBit, exponent: f64) -> Self {
+        Self {
+            target: target.clone(),
+            exponent,
+        }
     }
 }
 
@@ -133,38 +119,14 @@ impl QuantumGate for HPowGate {
         format!("H^{:.3}(target={})", self.exponent, self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::HPowGate(Self::new(
-            self.target,
+            &self.target,
             self.exponent,
         )))
-    }
-}
-
-impl SingleQubitGate for HPowGate {
-    fn alpha_re(&self) -> f64 {
-        let angle = PI * self.exponent / 4.0;
-        (angle.cos() + angle.sin()) / (2.0_f64).sqrt()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        let angle = PI * self.exponent / 4.0;
-        (angle.cos() - angle.sin()) / (2.0_f64).sqrt()
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
     }
 }

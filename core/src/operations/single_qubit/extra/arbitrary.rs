@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents an arbitrary single-qubit quantum gate.
@@ -37,7 +39,7 @@ use crate::{Complex, GateType, Matrix, Qubit};
 /// where α* and β* are complex conjugates of α and β respectively.
 /// The parameters must satisfy |α|² + |β|² = 1 to ensure unitarity.
 pub struct Arbitrary {
-    target: Qubit,
+    target: QuantumBit,
     alpha_re: f64,
     alpha_im: f64,
     beta_re: f64,
@@ -47,7 +49,7 @@ pub struct Arbitrary {
 
 impl Arbitrary {
     pub fn new(
-        target: Qubit,
+        target: &QuantumBit,
         alpha_re: f64,
         alpha_im: f64,
         beta_re: f64,
@@ -69,13 +71,33 @@ impl Arbitrary {
         }
 
         Self {
-            target,
+            target: target.clone(),
             alpha_re,
             alpha_im,
             beta_re,
             beta_im,
             global_phase,
         }
+    }
+
+    fn alpha_re(&self) -> f64 {
+        self.alpha_re
+    }
+
+    fn alpha_im(&self) -> f64 {
+        self.alpha_im
+    }
+
+    fn beta_re(&self) -> f64 {
+        self.beta_re
+    }
+
+    fn beta_im(&self) -> f64 {
+        self.beta_im
+    }
+
+    fn global_phase(&self) -> f64 {
+        self.global_phase
     }
 }
 
@@ -103,40 +125,18 @@ impl QuantumGate for Arbitrary {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
-    fn enumerated(&self) -> crate::GateType {
+    fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::Arbitrary(Self::new(
-            self.target,
+            &self.target,
             self.alpha_re,
             self.alpha_im,
             self.beta_re,
             self.beta_im,
             self.global_phase,
         )))
-    }
-}
-
-impl SingleQubitGate for Arbitrary {
-    fn alpha_re(&self) -> f64 {
-        self.alpha_re
-    }
-
-    fn alpha_im(&self) -> f64 {
-        self.alpha_im
-    }
-
-    fn beta_re(&self) -> f64 {
-        self.beta_re
-    }
-
-    fn beta_im(&self) -> f64 {
-        self.beta_im
-    }
-
-    fn global_phase(&self) -> f64 {
-        self.global_phase
     }
 }

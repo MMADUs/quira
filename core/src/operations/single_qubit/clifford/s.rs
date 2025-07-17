@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the S gate (also known as the phase gate or Z90 gate).
@@ -36,16 +38,18 @@ use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
 ///
 /// Applying this gate twice is equivalent to applying the Z gate once.
 pub struct SGate {
-    target: Qubit,
+    target: QuantumBit,
 }
 
 impl SGate {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new(target: &QuantumBit) -> Self {
+        Self {
+            target: target.clone(),
+        }
     }
 
     pub fn dagger(&self) -> InvSGate {
-        InvSGate::new(self.target)
+        InvSGate::new(&self.target)
     }
 }
 
@@ -61,34 +65,12 @@ impl QuantumGate for SGate {
         format!("S(target={})", self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::SGate(Self::new(self.target)))
-    }
-}
-
-impl SingleQubitGate for SGate {
-    fn alpha_re(&self) -> f64 {
-        1.0 / ((2.0_f64).sqrt())
-    }
-
-    fn alpha_im(&self) -> f64 {
-        -1.0 / ((2.0_f64).sqrt())
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        PI / 4.0
+        GateType::SingleQubit(SingleQubitType::SGate(Self::new(&self.target)))
     }
 }
 
@@ -105,12 +87,14 @@ impl SingleQubitGate for SGate {
 ///
 /// Applying this gate after the S gate results in the identity gate.
 pub struct InvSGate {
-    target: Qubit,
+    target: QuantumBit,
 }
 
 impl InvSGate {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new(target: &QuantumBit) -> Self {
+        Self {
+            target: target.clone(),
+        }
     }
 }
 
@@ -126,33 +110,11 @@ impl QuantumGate for InvSGate {
         format!("Inv-S(target={})", self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::InvSGate(Self::new(self.target)))
-    }
-}
-
-impl SingleQubitGate for InvSGate {
-    fn alpha_re(&self) -> f64 {
-        1.0 / ((2.0_f64).sqrt())
-    }
-
-    fn alpha_im(&self) -> f64 {
-        1.0 / ((2.0_f64).sqrt())
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        (-1.0 * PI) / 4.0
+        GateType::SingleQubit(SingleQubitType::InvSGate(Self::new(&self.target)))
     }
 }

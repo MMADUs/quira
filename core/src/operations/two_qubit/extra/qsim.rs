@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
 use crate::operations::two_qubit::TwoQubitType;
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the Qsim gate, a parameterized two-qubit gate used in quantum simulation.
@@ -51,18 +53,18 @@ use crate::{Complex, GateType, Matrix, Qubit};
 /// * `y` - Second rotation parameter affecting the computational basis mixing (in radians)
 /// * `z` - Phase rotation parameter (in radians)
 pub struct Qsim {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
     x: f64,
     y: f64,
     z: f64,
 }
 
 impl Qsim {
-    pub fn new(control: Qubit, target: Qubit, x: f64, y: f64, z: f64) -> Self {
+    pub fn new(control: &QuantumBit, target: &QuantumBit, x: f64, y: f64, z: f64) -> Self {
         Self {
-            control,
-            target,
+            control: control.clone(),
+            target: target.clone(),
             x,
             y,
             z,
@@ -113,14 +115,14 @@ impl QuantumGate for Qsim {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::Qsim(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
             self.x,
             self.y,
             self.z,

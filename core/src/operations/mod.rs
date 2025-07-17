@@ -20,47 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 pub mod single_qubit;
 pub mod two_qubit;
 
-use single_qubit::SingleQubitType;
-use two_qubit::TwoQubitType;
-
-use crate::{
-    endian::{QubitIndexing, expand_unitary},
-    kernel::QuantumState,
-    types::{Complex, Matrix, Qubit},
-};
+pub use single_qubit as singleq;
+pub use two_qubit as twoq;
 
 pub enum GateType {
-    SingleQubit(SingleQubitType),
-    TwoQubit(TwoQubitType),
-}
-
-pub trait QuantumGate: Send + Sync {
-    /// Get the unitary matrix representation of the gate
-    fn unitary_matrix(&self) -> Matrix<Complex>;
-
-    /// Quantum gate name representation
-    fn name(&self) -> String;
-
-    /// Get the target qubits this gate operates on
-    fn construct_targets(&self) -> Vec<Qubit>;
-
-    /// Categorized the gate into enum types
-    fn enumerated(&self) -> GateType;
-}
-
-// Helper trait (optional)
-pub trait GateApplyExt {
-    fn apply<T: QuantumState>(&self, state: &mut T, indexing: &QubitIndexing);
-}
-
-// Implement for all references to types that implement QuantumGate
-impl<T: QuantumGate + ?Sized> GateApplyExt for T {
-    fn apply<U: QuantumState>(&self, state: &mut U, indexing: &QubitIndexing) {
-        let n = state.num_qubits();
-        let targets = self.construct_targets();
-        let unitary = self.unitary_matrix();
-        let enumerated = self.enumerated();
-        let u = expand_unitary(n, &targets, &unitary, indexing);
-        state.apply(u, enumerated);
-    }
+    SingleQubit(singleq::SingleQubitType),
+    TwoQubit(twoq::TwoQubitType),
 }

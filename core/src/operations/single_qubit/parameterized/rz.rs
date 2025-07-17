@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents a rotation around the Z-axis of the Bloch sphere.
@@ -35,13 +37,16 @@ use crate::{Complex, GateType, Matrix, Qubit};
 ///
 /// This gate is equivalent to e^(-i*θ*Z/2) where Z is the Pauli-Z matrix.
 pub struct RotateZ {
-    target: Qubit,
+    target: QuantumBit,
     theta: f64,
 }
 
 impl RotateZ {
-    pub fn new(target: Qubit, theta: f64) -> Self {
-        RotateZ { target, theta }
+    pub fn new(target: &QuantumBit, theta: f64) -> Self {
+        RotateZ {
+            target: target.clone(),
+            theta,
+        }
     }
 }
 
@@ -59,33 +64,14 @@ impl QuantumGate for RotateZ {
         format!("RZ(target={}, theta={:.4})", self.target, self.theta)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::RotateZ(Self::new(self.target, self.theta)))
-    }
-}
-
-impl SingleQubitGate for RotateZ {
-    fn alpha_re(&self) -> f64 {
-        (self.theta / 2.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        (-1.0) * (self.theta / 2.0).sin()
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
+        GateType::SingleQubit(SingleQubitType::RotateZ(Self::new(
+            &self.target,
+            self.theta,
+        )))
     }
 }

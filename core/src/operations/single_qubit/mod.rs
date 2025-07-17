@@ -21,31 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 mod tests;
 
 pub mod clifford;
-pub use clifford::*;
-
 pub mod parameterized;
-pub use parameterized::*;
-
 pub mod extra;
+
+pub use clifford::*;
+pub use parameterized::*;
 pub use extra::*;
-
-/// single qubit gate operation.
-pub trait SingleQubitGate: Send + Sync {
-    /// alpha real Re(α) of the on-diagonal elements of the unitary matrix.
-    fn alpha_re(&self) -> f64;
-
-    /// alpha imaginary Im(α) of the on-diagonal elements of the unitary matrix.
-    fn alpha_im(&self) -> f64;
-
-    /// beta real Re(β) of the off-diagonal elements of the unitary matrix.
-    fn beta_re(&self) -> f64;
-
-    /// beta imaginary Im(β) of the off-diagonal elements of the unitary matrix.
-    fn beta_im(&self) -> f64;
-
-    /// the global phase φ of the unitary.
-    fn global_phase(&self) -> f64;
-}
 
 /// enum definitions
 pub enum SingleQubitType {

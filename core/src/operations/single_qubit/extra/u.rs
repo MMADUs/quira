@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the universal single-qubit gate (U gate) that can be used to implement any single-qubit operation.
@@ -46,16 +48,16 @@ use crate::{Complex, GateType, Matrix, Qubit};
 /// - U(0,0,π/2) = S (Phase gate)
 /// - U(0,0,π/4) = T (π/8 gate)
 pub struct UGate {
-    target: Qubit,
+    target: QuantumBit,
     theta: f64,
     phi: f64,
     lambda: f64,
 }
 
 impl UGate {
-    pub fn new(target: Qubit, theta: f64, phi: f64, lambda: f64) -> Self {
+    pub fn new(target: &QuantumBit, theta: f64, phi: f64, lambda: f64) -> Self {
         Self {
-            target,
+            target: target.clone(),
             theta,
             phi,
             lambda,
@@ -89,38 +91,16 @@ impl QuantumGate for UGate {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
-    fn enumerated(&self) -> crate::GateType {
+    fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::UGate(Self::new(
-            self.target,
+            &self.target,
             self.theta,
             self.phi,
             self.lambda,
         )))
-    }
-}
-
-impl SingleQubitGate for UGate {
-    fn alpha_re(&self) -> f64 {
-        (self.theta / 2.0).cos() * self.global_phase().cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        (self.theta / 2.0).cos() * self.global_phase().sin()
-    }
-
-    fn beta_re(&self) -> f64 {
-        (-1.0) * (self.theta / 2.0).sin() * (self.lambda - self.phi).cos()
-    }
-
-    fn beta_im(&self) -> f64 {
-        (-1.0) * (self.theta / 2.0).sin() * (self.lambda - self.phi).sin()
-    }
-
-    fn global_phase(&self) -> f64 {
-        (self.phi + self.lambda) / 2.0
     }
 }

@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
 use crate::operations::two_qubit::TwoQubitType;
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents a controlled rotation in the XY-plane gate.
@@ -42,17 +44,17 @@ use crate::{Complex, GateType, Matrix, Qubit};
 /// - `theta`: The rotation angle θ in radians
 /// - `phi`: The axis angle φ in the XY-plane
 pub struct ControlledRotateXY {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
     theta: f64,
     phi: f64,
 }
 
 impl ControlledRotateXY {
-    pub fn new(control: Qubit, target: Qubit, theta: f64, phi: f64) -> Self {
+    pub fn new(control: &QuantumBit, target: &QuantumBit, theta: f64, phi: f64) -> Self {
         Self {
-            control,
-            target,
+            control: control.clone(),
+            target: target.clone(),
             theta,
             phi,
         }
@@ -100,14 +102,14 @@ impl QuantumGate for ControlledRotateXY {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::ControlledRotateXY(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
             self.theta,
             self.phi,
         )))

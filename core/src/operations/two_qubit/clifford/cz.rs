@@ -19,9 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
+use crate::bit::QuantumBit;
+use crate::constant::PI;
+use crate::operations::GateType;
 use crate::operations::two_qubit::TwoQubitType;
-use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the Controlled-Z (CZ) gate, applying a phase flip when both qubits are |1⟩.
@@ -50,17 +53,20 @@ use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
 /// * `control` - The first qubit in the controlled phase operation
 /// * `target` - The second qubit in the controlled phase operation
 pub struct ControlledPauliZ {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
 }
 
 impl ControlledPauliZ {
-    pub fn new(control: Qubit, target: Qubit) -> Self {
-        Self { control, target }
+    pub fn new(control: &QuantumBit, target: &QuantumBit) -> Self {
+        Self {
+            control: control.clone(),
+            target: target.clone(),
+        }
     }
 
     pub fn phase_shift(&self, phi: f64) -> PhaseShiftedControlledZ {
-        PhaseShiftedControlledZ::new(self.control, self.target, phi)
+        PhaseShiftedControlledZ::new(&self.control, &self.target, phi)
     }
 }
 
@@ -98,14 +104,14 @@ impl QuantumGate for ControlledPauliZ {
         format!("CZ(control={}, target={})", self.control, self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::ControlledPauliZ(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
         )))
     }
 }
@@ -128,16 +134,16 @@ impl QuantumGate for ControlledPauliZ {
 /// - `target`: The target qubit index  
 /// - `phi`: The phase shift parameter φ
 pub struct PhaseShiftedControlledZ {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
     phi: f64,
 }
 
 impl PhaseShiftedControlledZ {
-    pub fn new(control: Qubit, target: Qubit, phi: f64) -> Self {
+    pub fn new(control: &QuantumBit, target: &QuantumBit, phi: f64) -> Self {
         Self {
-            control,
-            target,
+            control: control.clone(),
+            target: target.clone(),
             phi,
         }
     }
@@ -185,14 +191,14 @@ impl QuantumGate for PhaseShiftedControlledZ {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::PhaseShiftedControlledZ(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
             self.phi,
         )))
     }

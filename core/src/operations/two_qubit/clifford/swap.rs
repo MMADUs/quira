@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
 use crate::operations::two_qubit::TwoQubitType;
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the SWAP gate, which exchanges the states of two qubits.
@@ -47,13 +49,16 @@ use crate::{Complex, GateType, Matrix, Qubit};
 /// * `control` - The first qubit to be swapped
 /// * `target` - The second qubit to be swapped
 pub struct SWAP {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
 }
 
 impl SWAP {
-    pub fn new(control: Qubit, target: Qubit) -> Self {
-        Self { control, target }
+    pub fn new(control: &QuantumBit, target: &QuantumBit) -> Self {
+        Self {
+            control: control.clone(),
+            target: target.clone(),
+        }
     }
 }
 
@@ -91,12 +96,12 @@ impl QuantumGate for SWAP {
         format!("SWAP(control={}, target={})", self.control, self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::TwoQubit(TwoQubitType::SWAP(Self::new(self.control, self.target)))
+        GateType::TwoQubit(TwoQubitType::SWAP(Self::new(&self.control, &self.target)))
     }
 }
 
@@ -123,13 +128,16 @@ impl QuantumGate for SWAP {
 /// * `control` - The first qubit to be swapped with phase
 /// * `target` - The second qubit to be swapped with phase
 pub struct ISWAP {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
 }
 
 impl ISWAP {
-    pub fn new(control: Qubit, target: Qubit) -> Self {
-        Self { control, target }
+    pub fn new(control: &QuantumBit, target: &QuantumBit) -> Self {
+        Self {
+            control: control.clone(),
+            target: target.clone(),
+        }
     }
 }
 
@@ -167,12 +175,12 @@ impl QuantumGate for ISWAP {
         format!("ISWAP(control={}, target={})", self.control, self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::TwoQubit(TwoQubitType::ISWAP(Self::new(self.control, self.target)))
+        GateType::TwoQubit(TwoQubitType::ISWAP(Self::new(&self.control, &self.target)))
     }
 }
 
@@ -200,13 +208,16 @@ impl QuantumGate for ISWAP {
 /// * `control` - The first qubit to be partially swapped
 /// * `target` - The second qubit to be partially swapped
 pub struct SqrtISWAP {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
 }
 
 impl SqrtISWAP {
-    pub fn new(control: Qubit, target: Qubit) -> Self {
-        Self { control, target }
+    pub fn new(control: &QuantumBit, target: &QuantumBit) -> Self {
+        Self {
+            control: control.clone(),
+            target: target.clone(),
+        }
     }
 }
 
@@ -248,14 +259,14 @@ impl QuantumGate for SqrtISWAP {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::SqrtISWAP(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
         )))
     }
 }
@@ -286,13 +297,16 @@ impl QuantumGate for SqrtISWAP {
 /// * `control` - The first qubit to be operated on
 /// * `target` - The second qubit to be operated on
 pub struct InvSqrtISWAP {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
 }
 
 impl InvSqrtISWAP {
-    pub fn new(control: Qubit, target: Qubit) -> Self {
-        Self { control, target }
+    pub fn new(control: &QuantumBit, target: &QuantumBit) -> Self {
+        Self {
+            control: control.clone(),
+            target: target.clone(),
+        }
     }
 }
 
@@ -334,14 +348,14 @@ impl QuantumGate for InvSqrtISWAP {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::InvSqrtISWAP(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
         )))
     }
 }
@@ -370,13 +384,16 @@ impl QuantumGate for InvSqrtISWAP {
 /// * `control` - The first qubit in the conditional swap
 /// * `target` - The second qubit in the conditional swap
 pub struct FSWAP {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
 }
 
 impl FSWAP {
-    pub fn new(control: Qubit, target: Qubit) -> Self {
-        Self { control, target }
+    pub fn new(control: &QuantumBit, target: &QuantumBit) -> Self {
+        Self {
+            control: control.clone(),
+            target: target.clone(),
+        }
     }
 }
 
@@ -414,11 +431,11 @@ impl QuantumGate for FSWAP {
         format!("FSWAP(control={}, target={})", self.control, self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::TwoQubit(TwoQubitType::FSWAP(Self::new(self.control, self.target)))
+        GateType::TwoQubit(TwoQubitType::FSWAP(Self::new(&self.control, &self.target)))
     }
 }

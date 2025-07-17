@@ -19,9 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
+use crate::bit::QuantumBit;
+use crate::constant::PI;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the T gate, which is a pi/4 phase rotation gate.
@@ -44,12 +47,14 @@ use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
 /// to achieve universal quantum computation. It's also known as the π/8 gate
 /// (because its effect is a rotation of π/4 which is π/8 radians).
 pub struct TGate {
-    target: Qubit,
+    target: QuantumBit,
 }
 
 impl TGate {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new(target: &QuantumBit) -> Self {
+        Self {
+            target: target.clone(),
+        }
     }
 }
 
@@ -68,34 +73,12 @@ impl QuantumGate for TGate {
         format!("T(target={})", self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::TGate(Self::new(self.target)))
-    }
-}
-
-impl SingleQubitGate for TGate {
-    fn alpha_re(&self) -> f64 {
-        (PI / 8.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        (-1.0) * (PI / 8.0).sin()
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        PI / 8.0
+        GateType::SingleQubit(SingleQubitType::TGate(Self::new(&self.target)))
     }
 }
 
@@ -119,12 +102,14 @@ impl SingleQubitGate for TGate {
 /// The T† gate is used to undo the effect of the T gate and is also an important
 /// component in many quantum algorithms and error correction protocols.
 pub struct InvTGate {
-    target: Qubit,
+    target: QuantumBit,
 }
 
 impl InvTGate {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new(target: &QuantumBit) -> Self {
+        Self {
+            target: target.clone(),
+        }
     }
 }
 
@@ -143,33 +128,11 @@ impl QuantumGate for InvTGate {
         format!("Inv-T(target={})", self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::InvTGate(Self::new(self.target)))
-    }
-}
-
-impl SingleQubitGate for InvTGate {
-    fn alpha_re(&self) -> f64 {
-        (PI / 8.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        (PI / 8.0).sin()
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        (-1.0 * PI) / 8.0
+        GateType::SingleQubit(SingleQubitType::InvTGate(Self::new(&self.target)))
     }
 }

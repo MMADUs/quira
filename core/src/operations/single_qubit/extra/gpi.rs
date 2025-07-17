@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents a generalized π (Pi) pulse quantum gate.
@@ -36,13 +38,16 @@ use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
 ///
 /// When θ=0, this becomes equivalent to the Pauli-X gate.
 pub struct GPi {
-    target: Qubit,
+    target: QuantumBit,
     theta: f64,
 }
 
 impl GPi {
-    pub fn new(target: Qubit, theta: f64) -> Self {
-        Self { target, theta }
+    pub fn new(target: &QuantumBit, theta: f64) -> Self {
+        Self {
+            target: target.clone(),
+            theta,
+        }
     }
 }
 
@@ -60,37 +65,12 @@ impl QuantumGate for GPi {
         format!("GPi(target={}, theta={:.4})", self.target, self.theta)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::GPi(Self::new(
-            self.target,
-            self.theta,
-        )))
-    }
-}
-
-impl SingleQubitGate for GPi {
-    fn alpha_re(&self) -> f64 {
-        0.0
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        (self.theta).sin()
-    }
-
-    fn beta_im(&self) -> f64 {
-        (-1.0) * (self.theta).cos()
-    }
-
-    fn global_phase(&self) -> f64 {
-        PI / 2.0
+        GateType::SingleQubit(SingleQubitType::GPi(Self::new(&self.target, self.theta)))
     }
 }
 
@@ -107,13 +87,16 @@ impl SingleQubitGate for GPi {
 ///
 /// When θ=0, this is equivalent to a 90-degree rotation around the X-axis (√X gate without the global phase).
 pub struct GPi2 {
-    target: Qubit,
+    target: QuantumBit,
     theta: f64,
 }
 
 impl GPi2 {
-    pub fn new(target: Qubit, theta: f64) -> Self {
-        Self { target, theta }
+    pub fn new(target: &QuantumBit, theta: f64) -> Self {
+        Self {
+            target: target.clone(),
+            theta,
+        }
     }
 }
 
@@ -131,36 +114,11 @@ impl QuantumGate for GPi2 {
         format!("GPi2(target={}, theta={:.4})", self.target, self.theta)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::GPi2(Self::new(
-            self.target,
-            self.theta,
-        )))
-    }
-}
-
-impl SingleQubitGate for GPi2 {
-    fn alpha_re(&self) -> f64 {
-        1.0 / 2.0_f64.sqrt()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        (self.theta).sin() / 2.0_f64.sqrt()
-    }
-
-    fn beta_im(&self) -> f64 {
-        (-1.0 * (self.theta).cos()) / 2.0_f64.sqrt()
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
+        GateType::SingleQubit(SingleQubitType::GPi2(Self::new(&self.target, self.theta)))
     }
 }

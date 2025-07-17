@@ -27,16 +27,6 @@ pub use parameterized::*;
 pub mod extra;
 pub use extra::*;
 
-use super::QuantumGate;
-
-/// the composition of kak decomposition
-pub struct KakDecomposition {
-    pub global_phase: f64,
-    pub k_vector: [f64; 3],
-    pub u_before: Vec<Box<dyn QuantumGate>>,
-    pub u_after: Vec<Box<dyn QuantumGate>>,
-}
-
 pub enum TwoQubitType {
     // clifford
     ControlledNot(ControlledNot),

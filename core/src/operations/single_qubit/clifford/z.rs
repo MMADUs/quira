@@ -19,9 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
+use crate::bit::QuantumBit;
+use crate::constant::PI;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the Pauli-Z gate (also known as the phase-flip gate).
@@ -34,16 +37,18 @@ use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
 /// Z = [ [ 1,  0 ],
 ///       [ 0, -1 ] ]
 pub struct PauliZ {
-    target: Qubit,
+    target: QuantumBit,
 }
 
 impl PauliZ {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new(target: &QuantumBit) -> Self {
+        Self {
+            target: target.clone(),
+        }
     }
 
     pub fn power(&self, exponent: f64) -> ZPowGate {
-        ZPowGate::new(self.target, exponent)
+        ZPowGate::new(&self.target, exponent)
     }
 }
 
@@ -59,34 +64,12 @@ impl QuantumGate for PauliZ {
         format!("Z(target={})", self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::PauliZ(Self::new(self.target)))
-    }
-}
-
-impl SingleQubitGate for PauliZ {
-    fn alpha_re(&self) -> f64 {
-        0.0
-    }
-
-    fn alpha_im(&self) -> f64 {
-        -1.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        PI / 2.0
+        GateType::SingleQubit(SingleQubitType::PauliZ(Self::new(&self.target)))
     }
 }
 
@@ -98,13 +81,16 @@ impl SingleQubitGate for PauliZ {
 ///
 /// When t=1, this reduces to the standard Pauli-Z gate.
 pub struct ZPowGate {
-    target: Qubit,
+    target: QuantumBit,
     exponent: f64, // t parameter
 }
 
 impl ZPowGate {
-    pub fn new(target: Qubit, exponent: f64) -> Self {
-        Self { target, exponent }
+    pub fn new(target: &QuantumBit, exponent: f64) -> Self {
+        Self {
+            target: target.clone(),
+            exponent,
+        }
     }
 }
 
@@ -124,36 +110,14 @@ impl QuantumGate for ZPowGate {
         format!("Z^{:.3}(target={})", self.exponent, self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::ZPowGate(Self::new(
-            self.target,
+            &self.target,
             self.exponent,
         )))
-    }
-}
-
-impl SingleQubitGate for ZPowGate {
-    fn alpha_re(&self) -> f64 {
-        (PI * self.exponent / 2.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        -(PI * self.exponent / 2.0).sin()
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
     }
 }

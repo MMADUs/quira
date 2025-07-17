@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
 use crate::operations::two_qubit::TwoQubitType;
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents a Bogoliubov transformation gate.
@@ -45,17 +47,17 @@ use crate::{Complex, GateType, Matrix, Qubit};
 /// - `delta_re`: Real part of the complex parameter Δ
 /// - `delta_im`: Imaginary part of the complex parameter Δ
 pub struct Bogoliubov {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
     delta_re: f64,
     delta_im: f64,
 }
 
 impl Bogoliubov {
-    pub fn new(control: Qubit, target: Qubit, delta_re: f64, delta_im: f64) -> Self {
+    pub fn new(control: &QuantumBit, target: &QuantumBit, delta_re: f64, delta_im: f64) -> Self {
         Self {
-            control,
-            target,
+            control: control.clone(),
+            target: target.clone(),
             delta_re,
             delta_im,
         }
@@ -102,14 +104,14 @@ impl QuantumGate for Bogoliubov {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::Bogoliubov(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
             self.delta_re,
             self.delta_im,
         )))

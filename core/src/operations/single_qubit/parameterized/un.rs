@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents a phase shift operation that only affects the |0⟩ state of a qubit.
@@ -38,13 +40,16 @@ use crate::{Complex, GateType, Matrix, Qubit};
 ///
 /// This is the complement to PhaseShiftState1 and allows for precise control of qubit phases.
 pub struct U0Gate {
-    target: Qubit,
+    target: QuantumBit,
     theta: f64,
 }
 
 impl U0Gate {
-    pub fn new(target: Qubit, theta: f64) -> Self {
-        Self { target, theta }
+    pub fn new(target: &QuantumBit, theta: f64) -> Self {
+        Self {
+            target: target.clone(),
+            theta,
+        }
     }
 }
 
@@ -67,34 +72,12 @@ impl QuantumGate for U0Gate {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::U0Gate(Self::new(self.target, self.theta)))
-    }
-}
-
-impl SingleQubitGate for U0Gate {
-    fn alpha_re(&self) -> f64 {
-        (self.theta / 2.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        (self.theta / 2.0).sin()
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        self.theta / 2.0
+        GateType::SingleQubit(SingleQubitType::U0Gate(Self::new(&self.target, self.theta)))
     }
 }
 
@@ -113,13 +96,16 @@ impl SingleQubitGate for U0Gate {
 ///
 /// This is useful for adjusting relative phases between the computational basis states.
 pub struct U1Gate {
-    target: Qubit,
+    target: QuantumBit,
     theta: f64,
 }
 
 impl U1Gate {
-    pub fn new(target: Qubit, theta: f64) -> Self {
-        Self { target, theta }
+    pub fn new(target: &QuantumBit, theta: f64) -> Self {
+        Self {
+            target: target.clone(),
+            theta,
+        }
     }
 }
 
@@ -142,34 +128,12 @@ impl QuantumGate for U1Gate {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::U1Gate(Self::new(self.target, self.theta)))
-    }
-}
-
-impl SingleQubitGate for U1Gate {
-    fn alpha_re(&self) -> f64 {
-        (self.theta / 2.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        (-1.0) * (self.theta / 2.0).sin()
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        0.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        self.theta / 2.0
+        GateType::SingleQubit(SingleQubitType::U1Gate(Self::new(&self.target, self.theta)))
     }
 }
 
@@ -181,15 +145,15 @@ impl SingleQubitGate for U1Gate {
 ///
 /// This gate performs a rotation equivalent to RZ(φ) RY(π/2) RZ(λ).
 pub struct U2Gate {
-    target: Qubit,
+    target: QuantumBit,
     phi: f64,    // φ parameter
     lambda: f64, // λ parameter
 }
 
 impl U2Gate {
-    pub fn new(target: Qubit, phi: f64, lambda: f64) -> Self {
+    pub fn new(target: &QuantumBit, phi: f64, lambda: f64) -> Self {
         Self {
-            target,
+            target: target.clone(),
             phi,
             lambda,
         }
@@ -216,38 +180,16 @@ impl QuantumGate for U2Gate {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::U2Gate(Self::new(
-            self.target,
+            &self.target,
             self.phi,
             self.lambda,
         )))
-    }
-}
-
-impl SingleQubitGate for U2Gate {
-    fn alpha_re(&self) -> f64 {
-        1.0 / (2.0_f64).sqrt()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        self.phi.cos() / (2.0_f64).sqrt()
-    }
-
-    fn beta_im(&self) -> f64 {
-        self.phi.sin() / (2.0_f64).sqrt()
-    }
-
-    fn global_phase(&self) -> f64 {
-        (self.phi + self.lambda) / 2.0
     }
 }
 
@@ -259,16 +201,16 @@ impl SingleQubitGate for U2Gate {
 ///
 /// This gate can represent any single-qubit rotation.
 pub struct U3Gate {
-    target: Qubit,
+    target: QuantumBit,
     theta: f64,  // θ parameter
     phi: f64,    // φ parameter
     lambda: f64, // λ parameter
 }
 
 impl U3Gate {
-    pub fn new(target: Qubit, theta: f64, phi: f64, lambda: f64) -> Self {
+    pub fn new(target: &QuantumBit, theta: f64, phi: f64, lambda: f64) -> Self {
         Self {
-            target,
+            target: target.clone(),
             theta,
             phi,
             lambda,
@@ -303,38 +245,16 @@ impl QuantumGate for U3Gate {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::U3Gate(Self::new(
-            self.target,
+            &self.target,
             self.theta,
             self.phi,
             self.lambda,
         )))
-    }
-}
-
-impl SingleQubitGate for U3Gate {
-    fn alpha_re(&self) -> f64 {
-        (self.theta / 2.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        self.phi.cos() * (self.theta / 2.0).sin()
-    }
-
-    fn beta_im(&self) -> f64 {
-        self.phi.sin() * (self.theta / 2.0).sin()
-    }
-
-    fn global_phase(&self) -> f64 {
-        (self.phi + self.lambda) / 2.0
     }
 }

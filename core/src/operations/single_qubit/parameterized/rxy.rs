@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents a rotation in the XY-plane of the Bloch sphere.
@@ -35,14 +37,18 @@ use crate::{Complex, GateType, Matrix, Qubit};
 ///
 /// This gate combines aspects of both RX and RY rotations and allows for arbitrary rotations in the XY-plane.
 pub struct RotateXY {
-    target: Qubit,
+    target: QuantumBit,
     theta: f64,
     phi: f64,
 }
 
 impl RotateXY {
-    pub fn new(target: Qubit, theta: f64, phi: f64) -> Self {
-        Self { target, theta, phi }
+    pub fn new(target: &QuantumBit, theta: f64, phi: f64) -> Self {
+        Self {
+            target: target.clone(),
+            theta,
+            phi,
+        }
     }
 }
 
@@ -68,41 +74,15 @@ impl QuantumGate for RotateXY {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::RotateXY(Self::new(
-            self.target,
+            &self.target,
             self.theta,
             self.phi,
         )))
-    }
-}
-
-impl SingleQubitGate for RotateXY {
-    fn alpha_re(&self) -> f64 {
-        (self.theta / 2.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        let s = (self.theta / 2.0).sin();
-        let vy = (self.phi).sin();
-        s * vy
-    }
-
-    fn beta_im(&self) -> f64 {
-        let s = (self.theta / 2.0).sin();
-        let vx = (self.phi).cos();
-        (-1.0) * s * vx
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
     }
 }

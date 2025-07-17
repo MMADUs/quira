@@ -17,11 +17,15 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+use std::usize;
+
 use ndarray::array;
 
-use crate::operations::QuantumGate;
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
 use crate::operations::two_qubit::TwoQubitType;
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents a parametric magnetic interaction gate between two qubits.
@@ -48,16 +52,16 @@ use crate::{Complex, GateType, Matrix, Qubit};
 /// * `target` - The target qubit that receives the conditional rotation
 /// * `strength` - The rotation angle parameter (in radians)
 pub struct PMInteraction {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
     strength: f64,
 }
 
 impl PMInteraction {
-    pub fn new(control: Qubit, target: Qubit, strength: f64) -> Self {
+    pub fn new(control: &QuantumBit, target: &QuantumBit, strength: f64) -> Self {
         Self {
-            control,
-            target,
+            control: control.clone(),
+            target: target.clone(),
             strength,
         }
     }
@@ -102,14 +106,14 @@ impl QuantumGate for PMInteraction {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::PMInteraction(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
             self.strength,
         )))
     }
@@ -143,17 +147,22 @@ impl QuantumGate for PMInteraction {
 /// * `strength_re` - Real part of the complex strength parameter
 /// * `strength_im` - Imaginary part of the complex strength parameter
 pub struct ComplexPMInteraction {
-    control: Qubit,
-    target: Qubit,
+    control: QuantumBit,
+    target: QuantumBit,
     strength_re: f64,
     strength_im: f64,
 }
 
 impl ComplexPMInteraction {
-    pub fn new(control: Qubit, target: Qubit, strength_re: f64, strength_im: f64) -> Self {
+    pub fn new(
+        control: &QuantumBit,
+        target: &QuantumBit,
+        strength_re: f64,
+        strength_im: f64,
+    ) -> Self {
         Self {
-            control,
-            target,
+            control: control.clone(),
+            target: target.clone(),
             strength_re,
             strength_im,
         }
@@ -200,14 +209,14 @@ impl QuantumGate for ComplexPMInteraction {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target, self.control]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index(), self.control.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::TwoQubit(TwoQubitType::ComplexPMInteraction(Self::new(
-            self.control,
-            self.target,
+            &self.control,
+            &self.target,
             self.strength_re,
             self.strength_im,
         )))

@@ -19,9 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit};
+use crate::bit::QuantumBit;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents a rotation around an arbitrary axis defined by spherical coordinates on the Bloch sphere.
@@ -41,16 +43,16 @@ use crate::{Complex, GateType, Matrix, Qubit};
 ///
 /// This is a generalized rotation gate that can represent any single-qubit unitary operation.
 pub struct RotateAroundSphericalAxis {
-    target: Qubit,
+    target: QuantumBit,
     theta: f64,
     spherical_theta: f64,
     spherical_phi: f64,
 }
 
 impl RotateAroundSphericalAxis {
-    pub fn new(target: Qubit, theta: f64, spherical_theta: f64, spherical_phi: f64) -> Self {
+    pub fn new(target: &QuantumBit, theta: f64, spherical_theta: f64, spherical_phi: f64) -> Self {
         Self {
-            target,
+            target: target.clone(),
             theta,
             spherical_theta,
             spherical_phi,
@@ -81,46 +83,16 @@ impl QuantumGate for RotateAroundSphericalAxis {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::RotateAroundSphericalAxis(Self::new(
-            self.target,
+            &self.target,
             self.theta,
             self.spherical_theta,
             self.spherical_phi,
         )))
-    }
-}
-
-impl SingleQubitGate for RotateAroundSphericalAxis {
-    fn alpha_re(&self) -> f64 {
-        (self.theta / 2.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        let s = (self.theta / 2.0).sin();
-        let vz = (self.spherical_theta).cos();
-        (-1.0) * s * vz
-    }
-
-    fn beta_re(&self) -> f64 {
-        let s = (self.theta / 2.0).sin();
-        let vy = (self.spherical_phi).sin();
-        let st = (self.spherical_theta).sin();
-        s * vy * st
-    }
-
-    fn beta_im(&self) -> f64 {
-        let s = (self.theta / 2.0).sin();
-        let vx = (self.spherical_phi).cos();
-        let st = (self.spherical_theta).sin();
-        (-1.0) * s * vx * st
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
     }
 }

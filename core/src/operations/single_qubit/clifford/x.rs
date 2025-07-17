@@ -19,9 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use ndarray::array;
 
-use crate::operations::QuantumGate;
-use crate::operations::single_qubit::{SingleQubitGate, SingleQubitType};
-use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
+use crate::bit::QuantumBit;
+use crate::constant::PI;
+use crate::operations::GateType;
+use crate::operations::single_qubit::SingleQubitType;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix};
 
 #[derive(Debug, Clone)]
 /// Represents the Pauli-X gate (also known as the bit-flip or NOT gate).
@@ -34,24 +37,26 @@ use crate::{Complex, GateType, Matrix, Qubit, constant::PI};
 /// X = [ [ 0, 1 ],
 ///       [ 1, 0 ] ]
 pub struct PauliX {
-    target: Qubit,
+    target: QuantumBit,
 }
 
 impl PauliX {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new(target: &QuantumBit) -> Self {
+        Self {
+            target: target.clone(),
+        }
     }
 
     pub fn sqrt(&self) -> SqrtPauliX {
-        SqrtPauliX::new(self.target)
+        SqrtPauliX::new(&self.target)
     }
 
     pub fn inv_sqrt(&self) -> InvSqrtPauliX {
-        InvSqrtPauliX::new(self.target)
+        InvSqrtPauliX::new(&self.target)
     }
 
     pub fn power(&self, exponent: f64) -> XPowGate {
-        XPowGate::new(self.target, exponent)
+        XPowGate::new(&self.target, exponent)
     }
 }
 
@@ -67,34 +72,12 @@ impl QuantumGate for PauliX {
         format!("X(target={})", self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::PauliX(Self::new(self.target)))
-    }
-}
-
-impl SingleQubitGate for PauliX {
-    fn alpha_re(&self) -> f64 {
-        0.0
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        -1.0
-    }
-
-    fn global_phase(&self) -> f64 {
-        PI / 2.0
+        GateType::SingleQubit(SingleQubitType::PauliX(Self::new(&self.target)))
     }
 }
 
@@ -111,12 +94,14 @@ impl SingleQubitGate for PauliX {
 ///
 /// Applying this gate twice is equivalent to applying the X gate once.
 pub struct SqrtPauliX {
-    target: Qubit,
+    target: QuantumBit,
 }
 
 impl SqrtPauliX {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new(target: &QuantumBit) -> Self {
+        Self {
+            target: target.clone(),
+        }
     }
 }
 
@@ -135,34 +120,12 @@ impl QuantumGate for SqrtPauliX {
         format!("Sqrt-X(target={})", self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::SqrtPauliX(Self::new(self.target)))
-    }
-}
-
-impl SingleQubitGate for SqrtPauliX {
-    fn alpha_re(&self) -> f64 {
-        (PI / 4.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        (PI / 4.0).sin() * (-1.0)
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
+        GateType::SingleQubit(SingleQubitType::SqrtPauliX(Self::new(&self.target)))
     }
 }
 
@@ -177,12 +140,14 @@ impl SingleQubitGate for SqrtPauliX {
 /// Applying this gate twice is equivalent to applying the X gate once,
 /// and applying it after the √X gate results in the identity gate.
 pub struct InvSqrtPauliX {
-    target: Qubit,
+    target: QuantumBit,
 }
 
 impl InvSqrtPauliX {
-    pub fn new(target: Qubit) -> Self {
-        Self { target }
+    pub fn new(target: &QuantumBit) -> Self {
+        Self {
+            target: target.clone(),
+        }
     }
 }
 
@@ -201,34 +166,12 @@ impl QuantumGate for InvSqrtPauliX {
         format!("Inv-Sqrt-X(target={})", self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
-        GateType::SingleQubit(SingleQubitType::InvSqrtPauliX(Self::new(self.target)))
-    }
-}
-
-impl SingleQubitGate for InvSqrtPauliX {
-    fn alpha_re(&self) -> f64 {
-        (PI / 4.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        (PI / 4.0).sin()
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
+        GateType::SingleQubit(SingleQubitType::InvSqrtPauliX(Self::new(&self.target)))
     }
 }
 
@@ -240,17 +183,20 @@ impl SingleQubitGate for InvSqrtPauliX {
 ///
 /// When t=1, this reduces to the standard Pauli-X gate.
 pub struct XPowGate {
-    target: Qubit,
+    target: QuantumBit,
     exponent: f64, // t parameter
 }
 
 impl XPowGate {
-    pub fn new(target: Qubit, exponent: f64) -> Self {
-        Self { target, exponent }
+    pub fn new(target: &QuantumBit, exponent: f64) -> Self {
+        Self {
+            target: target.clone(),
+            exponent,
+        }
     }
 
     pub fn phased(&self, phase: f64) -> PhasedXPowGate {
-        PhasedXPowGate::new(self.target, self.exponent, phase)
+        PhasedXPowGate::new(&self.target, self.exponent, phase)
     }
 }
 
@@ -276,37 +222,15 @@ impl QuantumGate for XPowGate {
         format!("X^{:.3}(target={})", self.exponent, self.target)
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::XPowGate(Self::new(
-            self.target,
+            &self.target,
             self.exponent,
         )))
-    }
-}
-
-impl SingleQubitGate for XPowGate {
-    fn alpha_re(&self) -> f64 {
-        (PI * self.exponent / 2.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        -(PI * self.exponent / 2.0).sin()
-    }
-
-    fn beta_re(&self) -> f64 {
-        0.0
-    }
-
-    fn beta_im(&self) -> f64 {
-        -(PI * self.exponent / 2.0).sin()
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
     }
 }
 
@@ -320,15 +244,15 @@ impl SingleQubitGate for XPowGate {
 /// [ [ cos(πt/2) - i*sin(πt/2)*cos(φ), -i*sin(πt/2)*sin(φ) - sin(πt/2)*cos(φ) ],
 ///   [ -i*sin(πt/2)*sin(φ) + sin(πt/2)*cos(φ), cos(πt/2) + i*sin(πt/2)*cos(φ) ] ]
 pub struct PhasedXPowGate {
-    target: Qubit,
+    target: QuantumBit,
     exponent: f64,       // t parameter
     phase_exponent: f64, // φ parameter
 }
 
 impl PhasedXPowGate {
-    pub fn new(target: Qubit, exponent: f64, phase_exponent: f64) -> Self {
+    pub fn new(target: &QuantumBit, exponent: f64, phase_exponent: f64) -> Self {
         Self {
-            target,
+            target: target.clone(),
             exponent,
             phase_exponent,
         }
@@ -362,37 +286,15 @@ impl QuantumGate for PhasedXPowGate {
         )
     }
 
-    fn construct_targets(&self) -> Vec<Qubit> {
-        vec![self.target]
+    fn construct_targets(&self) -> Vec<usize> {
+        vec![self.target.index()]
     }
 
     fn enumerated(&self) -> GateType {
         GateType::SingleQubit(SingleQubitType::PhasedXPowGate(Self::new(
-            self.target,
+            &self.target,
             self.exponent,
             self.phase_exponent,
         )))
-    }
-}
-
-impl SingleQubitGate for PhasedXPowGate {
-    fn alpha_re(&self) -> f64 {
-        (PI * self.exponent / 2.0).cos()
-    }
-
-    fn alpha_im(&self) -> f64 {
-        -(PI * self.exponent / 2.0).sin() * self.phase_exponent.cos()
-    }
-
-    fn beta_re(&self) -> f64 {
-        (PI * self.exponent / 2.0).sin() * self.phase_exponent.cos()
-    }
-
-    fn beta_im(&self) -> f64 {
-        -(PI * self.exponent / 2.0).sin() * self.phase_exponent.sin()
-    }
-
-    fn global_phase(&self) -> f64 {
-        0.0
     }
 }
