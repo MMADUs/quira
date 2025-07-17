@@ -17,7 +17,7 @@
 
 use ndarray::LinalgScalar;
 
-use crate::{Complex, Matrix};
+use crate::types::{Complex, Matrix};
 
 /// Computes the Kronecker product of two square matrices a and b.
 /// Both matrices must be square of any dimension.

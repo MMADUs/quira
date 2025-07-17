@@ -19,13 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::time::Instant;
 
-use crate::{
-    GateApplyExt, QuantumCircuit, QuantumInstructions, QubitOperation, RunResult,
-    constant::{C_ONE, C_ZERO},
-    endian::QubitIndexing,
-    kernel::QuantumState,
-    types::Vector,
-};
+use crate::circuit::{QuantumCircuit, QuantumInstructions, QubitOperation};
+use crate::constant::{C_ONE, C_ZERO};
+use crate::endian::QubitIndexing;
+use crate::io::QuantumState;
+use crate::ops::GateApplyExt;
+use crate::register::ClassicalRegister;
+use crate::result::RunResult;
+use crate::types::Vector;
 
 use rayon::prelude::*;
 
@@ -92,13 +93,13 @@ impl<T: QuantumState + Clone> QuantumJob<T> {
                 );
 
                 // Run shots in parallel for this circuit
-                let shot_results: Vec<Vec<bool>> = (0..shots)
+                let shot_results: Vec<ClassicalRegister> = (0..shots)
                     .into_par_iter()
                     .map(|_shot| {
                         // Prepare circuit execution
                         let mut qstate = self.kernel.clone();
-                        let mut classical_register: Vec<Option<bool>> =
-                            vec![None; circuit.num_classical_register()];
+                        let mut classical_register = circuit.creg_as_ref().clone();
+                        
                         // Apply quantum operation based on tokens.
                         for circuit_ops in circuit.operations_as_ref() {
                             match circuit_ops {
@@ -147,44 +148,37 @@ impl<T: QuantumState + Clone> QuantumJob<T> {
                                         );
                                     }
                                     // get classical measurement result
-                                    let measured = classical_register[*classical_bit];
-                                    let measured = measured.expect(&format!(
-                                        "classical_bit {} is empty",
-                                        classical_bit
-                                    ));
+                                    let measured = classical_register.get(*classical_bit);
                                     // conditionally apply
                                     if *if_measured == measured {
                                         ops.apply(&mut qstate, &self.qubit_indexing);
                                     }
                                 }
                                 QuantumInstructions::Measurements((qubit, classical_bit)) => {
-                                    // validate qubit size
-                                    if *qubit > qstate.num_qubits() {
+                                    // validate qubit size - Fixed: should be >= not >
+                                    if *qubit >= qstate.num_qubits() {
                                         panic!("Measurement out of index for qubit: {}", qubit);
                                     }
                                     // apply measurement
                                     let measured_bit = qstate.measure_qubit(*qubit);
-                                    classical_register[*classical_bit] = Some(measured_bit);
+                                    classical_register.set(*classical_bit, measured_bit);
                                 }
                                 QuantumInstructions::MeasureAll => {
                                     let measured = qstate.measure_all();
-                                    let mut mreg: Vec<Option<bool>> = vec![None; measured.len()];
+                                    let mut mcreg = ClassicalRegister::new(measured.len());
                                     // map result automatically
                                     for (i, measured_bit) in measured.iter().enumerate() {
-                                        mreg[i] = Some(*measured_bit);
+                                        mcreg.set(i, *measured_bit);
                                     }
-                                    classical_register = mreg;
+                                    classical_register = mcreg;
                                 }
                                 QuantumInstructions::Barrier => {}
                             }
                         }
-                        // Default to false for unmeasured bits
+                        
                         classical_register
-                            .into_iter()
-                            .map(|opt_bit| opt_bit.unwrap_or(false))
-                            .collect::<Vec<bool>>()
                     })
-                    .collect();
+                    .collect::<Vec<ClassicalRegister>>();
 
                 RunResult {
                     classical_bit: shot_results,

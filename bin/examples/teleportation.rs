@@ -3,79 +3,81 @@
 //!
 //! run example with: cargo run --example teleportation
 
-use quira::QuantumSimulator as QS;
-use quira::Qubit;
-use quira::QubitIndexing as QI;
-
-use quira::SingleQ::{Hadamard as H, PauliX as X, PauliZ as Z};
-use quira::TwoQ::ControlledNot as CNOT;
+use quira::{
+    common::{Complex, PI},
+    include::{ClassicalRegister, QuantumCircuit, QuantumJob, QuantumRegister, QuantumSimulator, StateVec},
+    operation::{
+        singleq::{Hadamard as H, PauliX as X, PauliZ as Z},
+        twoq::ControlledNot as CNOT,
+    },
+    provider::{QuantumDebugger, QubitIndexing as QI},
+};
 
 fn main() {
-    // make a new quantum circuit
-    let mut qsim: QS = QS::new(QI::LittleEndian); // -> Qiskit uses Little Endian.
-
-    // prepare qubit state to teleport
-    let phi: Qubit = qsim.qb_zero();
-
-    // prepare Alice's and Bob's qubit
-    let q0: Qubit = qsim.qb_zero(); // -> Alice's qubit
-    let q1: Qubit = qsim.qb_zero(); // -> Bob's qubit
-
-    // apply hadamard to phi
-    qsim.add(H::new(phi)); // -> superposition state we want to teleport
-
-    qsim.state_vec(false);
-    // [0] |000⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
-    // [1] |001⟩: (amp = 0.7071 + 0.0000i) => (prob = 0.5000, 50.00%)
-    // [2] |010⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [3] |011⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [4] |100⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [5] |101⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [6] |110⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [7] |111⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-
-    // apply hadamard & controlled not
-    qsim.add(H::new(q0)); // -> superposition in Alice's qubit
-    qsim.add(CNOT::new(q0, q1)); // entangled Alice's and Bob's qubit
-
-    qsim.state_vec(false);
-    // [0] |000⟩: (amp = 0.5000 + 0.0000i) => (prob = 0.2500, 25.00%)
-    // [1] |001⟩: (amp = 0.5000 + 0.0000i) => (prob = 0.2500, 25.00%)
-    // [2] |010⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [3] |011⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [4] |100⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [5] |101⟩: (amp = 0.0000 + 0.0000i) => (prob = 0.0000, 0.00%)
-    // [6] |110⟩: (amp = 0.5000 + 0.0000i) => (prob = 0.2500, 25.00%)
-    // [7] |111⟩: (amp = 0.5000 + 0.0000i) => (prob = 0.2500, 25.00%)
-
-    // apply controlled not & hadamard
-    qsim.add(CNOT::new(phi, q0)); // -> entagled phi and Alice's qubit
-    qsim.add(H::new(phi)); // -> finishes off phi bell state
-
-    qsim.state_vec(true);
-    // [0] |000⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
-    // [1] |001⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
-    // [2] |010⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
-    // [3] |011⟩: (amp = -0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
-    // [4] |100⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
-    // [5] |101⟩: (amp = -0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
-    // [6] |110⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
-    // [7] |111⟩: (amp = 0.3536 + 0.0000i) => (prob = 0.1250, 12.50%)
-
-    let m0: bool = qsim.measure(phi, 0); // measure phi to classical reg 0
-    let m1: bool = qsim.measure(q0, 1); // measure Alice's qubit to classical reg 1
-
-    println!("m0 = {}, m1 = {}", m0 as u8, m1 as u8); // -> superposition outcome
-
-    qsim.state_vec(true); // -> superposition state before teleportaion
-
-    // apply conditional measurement for teleportation
-    // if any of the measurement is |1>, it applies the gate.
-    qsim.cond_add(m0, X::new(q1)); // -> if Phi measured |1>, Bob applies Pauli X
-    qsim.cond_add(m1, Z::new(q1)); // -> if Alice measured |1>, Bob applies Pauli Z
-
-    qsim.state_vec(true); // -> superposition state after teleportation
-
-    qsim.state_qubit(q1); // -> verify, now phi state should be teleported to Bob's qubit state
-    qsim.state_qubit(q0); // -> verify, now Alice's qubit has collapse
+    // state we want to teleport
+    //
+    let theta = PI / 8.0;
+    let alpha = Complex::new(theta.cos(), 0.0);
+    let beta = Complex::new(0.0, theta.sin());
+    println!("state to teleport");
+    println!("{}|0> + {}|1> = 1", alpha, beta);
+    // define register
+    //
+    let qreg = QuantumRegister::new(2);
+    let creg = ClassicalRegister::new(2);
+    // define circuit
+    //
+    let mut circuit = QuantumCircuit::with_reg(&qreg, &creg);
+    let phi = circuit.qb_from_iter([alpha, beta]); // -> we teleport this qubit state
+    // build circuit
+    //
+    circuit.add(H::new(&qreg[0]));
+    circuit.add(CNOT::new(&qreg[0], &qreg[1]));
+    circuit.add(CNOT::new(&phi, &qreg[0]));
+    circuit.add(H::new(&phi));
+    // define backend
+    //
+    let backend = StateVec::new();
+    // simulate circuit
+    //
+    let mut qsim = QuantumSimulator::new(backend, QI::LittleEndian);
+    qsim.simulate(circuit);
+    // inspect state
+    //
+    let backend_state = qsim.backend();
+    let (tp_alpha, tp_beta) = backend_state.qubit_state(&qreg[1]);
+    println!("teleported state");
+    println!("{}|0> + {}|1> = 1", tp_alpha, tp_beta);
+    // quantum hardware execution
+    //
+    let mut circuit = QuantumCircuit::with_reg(&qreg, &creg);
+    let phi = circuit.qb_from_iter([alpha, beta]);
+    circuit.add(H::new(&qreg[0]));
+    circuit.add(CNOT::new(&qreg[0], &qreg[1]));
+    circuit.add(CNOT::new(&phi, &qreg[0]));
+    circuit.add(H::new(&phi));
+    circuit.measure(&phi, &creg[0]);
+    circuit.measure(&qreg[0], &creg[1]);
+    circuit.cond_add(&creg[0], 1, X::new(&qreg[1]));
+    circuit.cond_add(&creg[1], 1, Z::new(&qreg[1]));
+    // define backend 
+    //
+    let backend = StateVec::new();
+    // execute job
+    //
+    let mut job = QuantumJob::new(backend, QI::LittleEndian);
+    job.from_circuit(circuit);
+    job.run(100000);
+    let results = job.result();
+    for result in results.unwrap() {
+        // analyze each result
+        // 
+        for (bit, count) in result.get_counts() {
+            println!("{}: {}", bit, count);
+        }
+        let (mb, mc) = result.get_most_frequent().unwrap();
+        println!("|{}>: {}", mb, mc);
+        result.print_results();
+        println!("{}", result.histogram(20));
+    }
 }

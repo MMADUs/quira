@@ -17,19 +17,22 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-use crate::{
-    GateApplyExt, QuantumCircuit, QuantumInstructions, QubitOperation,
-    constant::{C_ONE, C_ZERO},
-    endian::QubitIndexing,
-    kernel::{QuantumDebugger, QuantumState},
-    types::{Qubit, Vector},
-};
+use crate::circuit::{QuantumCircuit, QuantumInstructions, QubitOperation};
+use crate::constant::{C_ONE, C_ZERO};
+use crate::endian::QubitIndexing;
+use crate::io::{QuantumDebugger, QuantumState};
+use crate::ops::GateApplyExt;
+use crate::register::ClassicalRegister;
+use crate::types::Vector;
 
+/// The Quantum Simulator for simulating state.
 pub struct QuantumSimulator<T: QuantumState + QuantumDebugger + Clone> {
     /// the quantum state vector.
     kernel: T,
     /// qubit indexing when applying to quantum state.
     qubit_indexing: QubitIndexing,
+    /// classical register after simulation.
+    classical_register: ClassicalRegister,
 }
 
 impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
@@ -38,6 +41,7 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
         Self {
             kernel: state,
             qubit_indexing: indexing,
+            classical_register: ClassicalRegister::new(0),
         }
     }
 
@@ -46,32 +50,21 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
         self.kernel.num_qubits()
     }
 
-    /// The kernel backend as ref
+    /// The kernel backend as ref.
     pub fn backend(&self) -> &T {
         &self.kernel
     }
 
-    /// Get the current quantum state
-    pub fn entire_state(&self, filter_zero: bool) -> T::StateType {
-        self.kernel.entire_state(filter_zero)
-    }
-
-    /// Get the state probability for specific BIT
-    pub fn bit_state(&self, bits: usize) -> T::BitStateType {
-        let bits = bit_to_bool_slice(bits, self.num_qubits());
-        self.kernel.bit_state(&bits)
-    }
-
-    /// Get the quantum state from specified qubit
-    pub fn qubit_state(&self, qubit: Qubit) -> T::QubitStateType {
-        self.kernel.qubit_state(qubit)
+    /// The classical register after simulation.
+    pub fn creg(&self) -> &ClassicalRegister {
+        &self.classical_register
     }
 
     /// Simulate a quantum circuit.
-    pub fn from_circuit(&mut self, circuit: QuantumCircuit) -> &mut Self {
-        let mut classical_register: Vec<Option<bool>> =
-            vec![None; circuit.num_classical_register()];
-        // Apply quantum operation based on tokens.
+    pub fn simulate(&mut self, circuit: QuantumCircuit) {
+        // prepare classical register
+        self.classical_register = circuit.creg_as_ref().clone();
+        // apply quantum operation based on tokens.
         for circuit_ops in circuit.operations_as_ref() {
             match circuit_ops {
                 QuantumInstructions::Qubit(qb) => {
@@ -115,9 +108,7 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
                         );
                     }
                     // get classical measurement result
-                    let measured = classical_register[*classical_bit];
-                    let measured =
-                        measured.expect(&format!("classical_bit {} is empty", classical_bit));
+                    let measured = self.classical_register.get(*classical_bit);
                     // conditionally apply
                     if *if_measured == measured {
                         ops.apply(&mut self.kernel, &self.qubit_indexing);
@@ -125,29 +116,24 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
                 }
                 QuantumInstructions::Measurements((qubit, classical_bit)) => {
                     // validate qubit size
-                    if *qubit > self.num_qubits() {
+                    if *qubit >= self.num_qubits() {
                         panic!("Measurement out of index for qubit: {}", qubit);
                     }
                     // apply measurement
                     let measured_bit = self.kernel.measure_qubit(*qubit);
-                    classical_register[*classical_bit] = Some(measured_bit);
+                    self.classical_register.set(*classical_bit, measured_bit);
                 }
                 QuantumInstructions::MeasureAll => {
                     let measured = self.kernel.measure_all();
-                    let mut mreg: Vec<Option<bool>> = vec![None; measured.len()];
+                    let mut mcreg = ClassicalRegister::new(measured.len());
                     // map result automatically
                     for (i, measured_bit) in measured.iter().enumerate() {
-                        mreg[i] = Some(*measured_bit);
+                        mcreg.set(i, *measured_bit);
                     }
-                    classical_register = mreg;
+                    self.classical_register = mcreg;
                 }
                 QuantumInstructions::Barrier => {}
             }
         }
-        self
     }
-}
-
-fn bit_to_bool_slice(bit: usize, width: usize) -> Vec<bool> {
-    (0..width).rev().map(|i| (bit >> i) & 1 == 1).collect()
 }

@@ -1,29 +1,38 @@
 //! Simulation TEST
 
-use quira::kernel::QuantumDebugger;
-use quira::*;
-use quira::QuantumCircuit;
-use quira::QuantumSimulator as QuiraSimulator;
-use quira::QubitIndexing as QI;
-
-use quira::SingleQ::{Hadamard as H, PauliX as X, PauliZ as Z};
-use quira::TwoQ::ControlledNot as CNOT;
+use quira::include::{
+    ClassicalRegister, QuantumCircuit, QuantumRegister, QuantumSimulator, StateVec,
+};
+use quira::operation::singleq::Hadamard as H;
+use quira::provider::{QuantumDebugger, QubitIndexing as QI};
 
 fn main() {
-    let mut circuit_a = QuantumCircuit::new(1, 1);
-    let q0 = circuit_a.qb_zero();
-    circuit_a.add(H::new(q0));
-
-    let mut circuit_b = QuantumCircuit::new(0, 0);
-    circuit_b.add(H::new(q0));
-
-    circuit_a.extend(circuit_b);
-
+    // define registers
+    //
+    let qreg = QuantumRegister::new(1).label("qreg 1");
+    let creg = ClassicalRegister::new(1).label("creg 1");
+    // define circuit 
+    //
+    let mut circuit = QuantumCircuit::with_reg(&qreg, &creg);
+    // build circuit 
+    //
+    circuit.add(H::new(&qreg[0]));
+    circuit.measure_all();
+    // define backend 
+    //
     let backend = StateVec::new();
-    let mut sim = QuiraSimulator::new(backend, QI::LittleEndian);
-    let state = sim.from_circuit(circuit_a).backend();
-
-    for (bit, amplitude) in state.entire_state(false) {
+    // simulate circuit 
+    //
+    let mut qs = QuantumSimulator::new(backend, QI::LittleEndian);
+    qs.simulate(circuit);
+    // see measured outcome in classical register 
+    //
+    let creg_result = qs.creg();
+    println!("classical bit: {}", creg_result.reg(&creg[0]));
+    // inspect full state 
+    //
+    let backend_state = qs.backend();
+    for (bit, amplitude) in backend_state.entire_state(false) {
         println!("|{}>: {}", bit, amplitude);
     }
 }
