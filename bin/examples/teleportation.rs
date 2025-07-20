@@ -5,7 +5,9 @@
 
 use quira::{
     common::{Complex, PI},
-    include::{ClassicalRegister, QuantumCircuit, QuantumJob, QuantumRegister, QuantumSimulator, StateVec},
+    include::{
+        ClassicalRegister, QuantumCircuit, QuantumJob, QuantumRegister, QuantumSimulator, StateVec,
+    },
     operation::{
         singleq::{Hadamard as H, PauliX as X, PauliZ as Z},
         twoq::ControlledNot as CNOT,
@@ -60,7 +62,7 @@ fn main() {
     circuit.measure(&qreg[0], &creg[1]);
     circuit.cond_add(&creg[0], 1, X::new(&qreg[1]));
     circuit.cond_add(&creg[1], 1, Z::new(&qreg[1]));
-    // define backend 
+    // define backend
     //
     let backend = StateVec::new();
     // execute job
@@ -71,7 +73,7 @@ fn main() {
     let results = job.result();
     for result in results.unwrap() {
         // analyze each result
-        // 
+        //
         for (bit, count) in result.get_counts() {
             println!("{}: {}", bit, count);
         }

@@ -19,11 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::time::Instant;
 
+use crate::bit::QuantumBit;
 use crate::circuit::{QuantumCircuit, QuantumInstructions, QubitOperation};
 use crate::constant::{C_ONE, C_ZERO};
 use crate::endian::QubitIndexing;
 use crate::io::QuantumState;
-use crate::ops::GateApplyExt;
+use crate::noise::{NoNoise, NoiseChannelOperation, NoiseModel};
+use crate::operations::single_qubit::PauliX;
+use crate::ops::{GateApplyExt, QuantumGate};
 use crate::register::ClassicalRegister;
 use crate::result::RunResult;
 use crate::types::Vector;
@@ -31,26 +34,40 @@ use crate::types::Vector;
 use rayon::prelude::*;
 
 /// Quantum job is used to execute the quantum circuits
-pub struct QuantumJob<T: QuantumState + Clone> {
+pub struct QuantumJob<T, N = NoNoise> 
+where 
+    T: QuantumState + Clone,
+    N: NoiseChannelOperation,
+{
     /// the selected kernel (quantum state)
     kernel: T,
     /// executed quantum circuit.
     circuits: Vec<QuantumCircuit>,
     /// qubit indexing when applying to quantum state.
     qubit_indexing: QubitIndexing,
+    /// noise model during execution.
+    noise_model: NoiseModel<N>,
     /// saved run result
     result: Option<Vec<RunResult>>,
 }
 
-impl<T: QuantumState + Clone> QuantumJob<T> {
+impl<T: QuantumState + Clone> QuantumJob<T, NoNoise> {
     /// create a new quantum backend with the given state.
     pub fn new(state: T, indexing: QubitIndexing) -> Self {
         Self {
             kernel: state,
             circuits: Vec::new(),
             qubit_indexing: indexing,
+            noise_model: NoiseModel::new(),
             result: None,
         }
+    }
+}
+
+impl<T: QuantumState + Clone, N: NoiseChannelOperation> QuantumJob<T, N> {
+    /// Add noise model to executable job
+    pub fn with_noise(&mut self, noise_model: NoiseModel<N>) {
+        self.noise_model.extend(noise_model);
     }
 
     /// Add multiple circuits to backend.
@@ -122,7 +139,23 @@ impl<T: QuantumState + Clone> QuantumJob<T> {
                                                 qstate.expand_state(ket_zero.clone());
                                             }
                                         }
-                                        QubitOperation::RESET => qstate.reset_state(),
+                                        QubitOperation::RESET(qubit_idx) => {
+                                            let qubit = QuantumBit::new(*qubit_idx).label("Reset qubit into |0>");
+                                            let pauli_x = PauliX::new(&qubit);
+                                            if pauli_x.construct_targets().len() > qstate.num_qubits() {
+                                                panic!(
+                                                    "{} Qubit Operation tries to operate on {} Qubit",
+                                                    pauli_x.construct_targets().len(),
+                                                    qstate.num_qubits()
+                                                );
+                                            }
+                                            // measure qubit
+                                            let measured_bit = qstate.measure_qubit(*qubit_idx);
+                                            // conditionally apply
+                                            if measured_bit == true {
+                                                pauli_x.apply(&mut qstate, &self.qubit_indexing);
+                                            }
+                                        },
                                     }
                                 }
                                 QuantumInstructions::Operations(ops) => {

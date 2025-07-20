@@ -17,16 +17,19 @@
 
 use ndarray_linalg::SVD;
 
-use crate::{
-    Complex, Matrix, QuantumGate, SingleQ::PauliY, Vector, constant::EPSILON, eigen,
-    kernel::density::matrix::Density, ops,
-};
+use crate::bit::QuantumBit;
+use crate::constant::EPSILON;
+use crate::kernel::density::matrix::Density;
+use crate::operations::singleq::PauliY;
+use crate::ops::QuantumGate;
+use crate::types::{Complex, Matrix, Vector};
+use crate::utils::{eigen, ops};
 
 /// Concurrence for two-qubit states
 pub fn concurrence(density: &Density) -> f64 {
     assert_eq!(density.dim(), 2, "concurrence is only for 2 qubit system");
     // Y^⊗n where n is n-qubit system
-    let pauli_y = PauliY::new(0).unitary_matrix();
+    let pauli_y = PauliY::new(&QuantumBit::new(0)).unitary_matrix();
     let y_tensor_y = ops::kron(&pauli_y, &pauli_y);
     // ρ̃ = (Y^⊗n) ρ* (Y^⊗n)
     let rho_conj = density.matrix_as_ref().mapv(|x| x.conj());

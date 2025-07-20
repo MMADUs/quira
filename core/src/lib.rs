@@ -20,11 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //! Quira ~ Strong Type System Quantum Computing Package.
 //! Start building your quantum algorithms!
 //!
-//! # Core Modules
-//! * `include` - The main quantum module.
+//! # Imports
+//! * `include` - The core of the quantum module.
 //! * `operation` - The quantum operation module.
-//! * `common` - The common quantum type module.
-//! * `provider` - The extra quantum provider module.
+//! * `common` - The common type module.
+//! * `provider` - The utility provider module.
 
 mod bit;
 mod circuit;
@@ -32,7 +32,8 @@ mod constant;
 mod endian;
 mod io;
 mod job;
-mod kernel;
+mod qstate;
+mod noise;
 mod operations;
 mod ops;
 mod prebuilt;
@@ -47,10 +48,11 @@ mod utils;
 pub mod include {
     pub use crate::circuit::*;
     pub use crate::job::*;
-    pub use crate::kernel::*;
+    pub use crate::qstate::*;
     pub use crate::register::*;
     pub use crate::simulator::*;
     pub use crate::bit::*;
+    pub use crate::noise::*;
 }
 
 /// The quantum operation module

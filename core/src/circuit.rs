@@ -28,7 +28,7 @@ pub enum QubitOperation {
     FROM(Vector<Complex>),
     ONES(usize),
     ZEROS(usize),
-    RESET,
+    RESET(usize),
 }
 
 /// Quantum instructions type
@@ -62,11 +62,15 @@ pub struct QuantumCircuit {
 impl QuantumCircuit {
     /// Create a new quantum circuit.
     pub fn new(qreg: usize, creg: usize) -> Self {
-        Self {
+        let mut circuit = Self {
             operations: Vec::new(),
             qreg: QuantumRegister::new(qreg),
             creg: ClassicalRegister::new(creg),
-        }
+        };
+        circuit
+            .operations
+            .push(QuantumInstructions::Qubit(QubitOperation::ZEROS(qreg)));
+        circuit
     }
 
     /// Create a new quantum circuit with register.
@@ -122,7 +126,7 @@ impl QuantumCircuit {
     }
 
     /// Return the reference of classical register.
-    pub(crate) fn creg_as_ref(&self) -> &ClassicalRegister {
+    pub fn creg_as_ref(&self) -> &ClassicalRegister {
         &self.creg
     }
 
@@ -210,9 +214,11 @@ impl QuantumCircuit {
     }
 
     /// Empty the qubit state.
-    pub fn reset(&mut self) {
+    pub fn reset(&mut self, qubit: &QuantumBit) {
         self.operations
-            .push(QuantumInstructions::Qubit(QubitOperation::RESET))
+            .push(QuantumInstructions::Qubit(QubitOperation::RESET(
+                qubit.index(),
+            )))
     }
 
     /// Conditionally add a operation to the circuit

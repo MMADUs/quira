@@ -24,9 +24,6 @@ use crate::types::{Complex, Matrix, Vector};
 /// every kernel (quantum state) implements backend operation
 /// for executing circuit in the backend
 pub trait BackendOperation {
-    /// reset the kernel state
-    fn reset_state(&mut self);
-
     /// expand the kernel state
     fn expand_state(&mut self, state: Vector<Complex>);
 

@@ -17,32 +17,47 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+use crate::bit::QuantumBit;
 use crate::circuit::{QuantumCircuit, QuantumInstructions, QubitOperation};
 use crate::constant::{C_ONE, C_ZERO};
 use crate::endian::QubitIndexing;
 use crate::io::{QuantumDebugger, QuantumState};
-use crate::ops::GateApplyExt;
+use crate::noise::{NoNoise, NoiseChannelOperation, NoiseModel};
+use crate::operations::single_qubit::PauliX;
+use crate::ops::{GateApplyExt, QuantumGate};
 use crate::register::ClassicalRegister;
 use crate::types::Vector;
 
 /// The Quantum Simulator for simulating state.
-pub struct QuantumSimulator<T: QuantumState + QuantumDebugger + Clone> {
+pub struct QuantumSimulator<T, N = NoNoise>
+where
+    T: QuantumState + QuantumDebugger + Clone,
+    N: NoiseChannelOperation,
+{
     /// the quantum state vector.
     kernel: T,
     /// qubit indexing when applying to quantum state.
     qubit_indexing: QubitIndexing,
     /// classical register after simulation.
     classical_register: ClassicalRegister,
+    /// noise model during simulation.
+    noise_model: NoiseModel<N>,
 }
 
-impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
-    /// Create a new quantum circuit.
+impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T, NoNoise> {
     pub fn new(state: T, indexing: QubitIndexing) -> Self {
         Self {
             kernel: state,
             qubit_indexing: indexing,
             classical_register: ClassicalRegister::new(0),
+            noise_model: NoiseModel::new(),
         }
+    }
+}
+
+impl<T: QuantumState + QuantumDebugger + Clone, N: NoiseChannelOperation> QuantumSimulator<T, N> {
+    pub fn with_noise(&mut self, noise_model: NoiseModel<N>) {
+        self.noise_model.extend(noise_model);
     }
 
     /// Return the number of qubit in the quantum statevec.
@@ -86,7 +101,23 @@ impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T> {
                                 self.kernel.expand_state(ket_zero.clone());
                             }
                         }
-                        QubitOperation::RESET => self.kernel.reset_state(),
+                        QubitOperation::RESET(qubit_idx) => {
+                            let qubit = QuantumBit::new(*qubit_idx).label("Reset qubit into |0>");
+                            let pauli_x = PauliX::new(&qubit);
+                            if pauli_x.construct_targets().len() > self.num_qubits() {
+                                panic!(
+                                    "{} Qubit Operation tries to operate on {} Qubit",
+                                    pauli_x.construct_targets().len(),
+                                    self.num_qubits()
+                                );
+                            }
+                            // measure qubit
+                            let measured_bit = self.kernel.measure_qubit(*qubit_idx);
+                            // conditionally apply
+                            if measured_bit == true {
+                                pauli_x.apply(&mut self.kernel, &self.qubit_indexing);
+                            }
+                        }
                     }
                 }
                 QuantumInstructions::Operations(ops) => {

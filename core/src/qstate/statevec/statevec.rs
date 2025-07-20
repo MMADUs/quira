@@ -15,10 +15,12 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::bit::QuantumBit;
 use crate::constant::{C_ONE, C_ZERO, EPSILON};
-use crate::kernel::{BackendOperation, QuantumDebugger, QuantumState};
-use crate::types::{Complex, Qubit, Vector};
-use crate::{GateType, Matrix};
+use crate::io::{BackendOperation, QuantumDebugger, QuantumState};
+use crate::operation::GateType;
+use crate::types::Matrix;
+use crate::types::{Complex, Vector};
 use num_complex::ComplexFloat;
 use rand::Rng;
 
@@ -127,11 +129,6 @@ impl QuantumState for StateVec {
 }
 
 impl BackendOperation for StateVec {
-    /// reset the state vector
-    fn reset_state(&mut self) {
-        self.amplitudes = Vector::from(Vec::new())
-    }
-
     /// Expanding the current state vector by kronecker product
     fn expand_state(&mut self, state: Vector<Complex>) {
         if self.is_empty() {
@@ -149,7 +146,7 @@ impl BackendOperation for StateVec {
     }
 
     /// Measure a specific qubit and collapse the state accordingly
-    fn measure_qubit(&mut self, qubit: Qubit) -> bool {
+    fn measure_qubit(&mut self, qubit: usize) -> bool {
         if qubit >= self.num_qubits() {
             panic!("Qubit index out of range");
         }
@@ -261,8 +258,10 @@ impl QuantumDebugger for StateVec {
     }
 
     /// Returns (amp_0, amp_1) marginal amplitudes for a specific qubit
-    fn qubit_state(&self, qubit: Qubit) -> Self::QubitStateType {
+    fn qubit_state(&self, qubit: &QuantumBit) -> Self::QubitStateType {
         let num_qubits = self.num_qubits();
+        let qubit = qubit.index();
+
         if qubit >= num_qubits {
             panic!(
                 "Error: Qubit index {} out of range. System has {} qubits.",
