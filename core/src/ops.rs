@@ -17,7 +17,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-use crate::endian::{QubitIndexing, expand_unitary};
+use crate::endian::expand_unitary;
 use crate::io::QuantumState;
 use crate::operations::GateType;
 use crate::types::{Complex, Matrix};
@@ -34,21 +34,26 @@ pub trait QuantumGate: Send + Sync {
 
     /// Categorized the gate into enum types
     fn enumerated(&self) -> GateType;
+
+    /// Categorized by character
+    fn characterized(&self) -> &str {
+        "undefined"
+    }
 }
 
 // Helper trait (optional)
 pub trait GateApplyExt {
-    fn apply<T: QuantumState>(&self, state: &mut T, indexing: &QubitIndexing);
+    fn apply<T: QuantumState>(&self, state: &mut T);
 }
 
 // Implement for all references to types that implement QuantumGate
 impl<T: QuantumGate + ?Sized> GateApplyExt for T {
-    fn apply<U: QuantumState>(&self, state: &mut U, indexing: &QubitIndexing) {
+    fn apply<U: QuantumState>(&self, state: &mut U) {
         let n = state.num_qubits();
         let targets = self.construct_targets();
         let unitary = self.unitary_matrix();
         let enumerated = self.enumerated();
-        let u = expand_unitary(n, &targets, &unitary, indexing);
+        let u = expand_unitary(n, &targets, &unitary);
         state.apply(u, enumerated);
     }
 }

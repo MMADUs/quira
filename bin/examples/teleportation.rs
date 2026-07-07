@@ -12,7 +12,7 @@ use quira::{
         singleq::{Hadamard as H, PauliX as X, PauliZ as Z},
         twoq::ControlledNot as CNOT,
     },
-    provider::{QuantumDebugger, QubitIndexing as QI},
+    provider::QuantumDebugger,
 };
 
 fn main() {
@@ -42,7 +42,7 @@ fn main() {
     let backend = StateVec::new();
     // simulate circuit
     //
-    let mut qsim = QuantumSimulator::new(backend, QI::LittleEndian);
+    let mut qsim = QuantumSimulator::new(backend);
     qsim.simulate(circuit);
     // inspect state
     //
@@ -67,7 +67,7 @@ fn main() {
     let backend = StateVec::new();
     // execute job
     //
-    let mut job = QuantumJob::new(backend, QI::LittleEndian);
+    let mut job = QuantumJob::new(backend);
     job.from_circuit(circuit);
     job.run(100000);
     let results = job.result();

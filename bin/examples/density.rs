@@ -6,7 +6,7 @@
 use quira::{
     include::{ClassicalRegister, Density, QuantumCircuit, QuantumRegister, QuantumSimulator},
     operation::singleq::Hadamard,
-    provider::{QuantumDebugger, QubitIndexing},
+    provider::QuantumDebugger,
 };
 
 fn main() {
@@ -26,7 +26,7 @@ fn main() {
     let backend = Density::new();
     // simulate circuit
     //
-    let mut qs = QuantumSimulator::new(backend, QubitIndexing::LittleEndian);
+    let mut qs = QuantumSimulator::new(backend);
     qs.simulate(circuit);
     // see measured outcome in classical register
     //

@@ -7,7 +7,7 @@ use quira::include::{
     ClassicalRegister, QuantumCircuit, QuantumRegister, QuantumSimulator, StateVec,
 };
 use quira::operation::singleq::Hadamard as H;
-use quira::provider::{QuantumDebugger, QubitIndexing as QI};
+use quira::provider::QuantumDebugger;
 
 fn main() {
     // define registers
@@ -26,7 +26,7 @@ fn main() {
     let backend = StateVec::new();
     // simulate circuit 
     //
-    let mut qs = QuantumSimulator::new(backend, QI::LittleEndian);
+    let mut qs = QuantumSimulator::new(backend);
     qs.simulate(circuit);
     // see measured outcome in classical register 
     //

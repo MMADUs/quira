@@ -20,13 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 use crate::types::{Complex, Matrix};
 use crate::utils::ops;
 
-/// Qubit index ordering mode when applying unitary to quantum state.
-#[derive(Debug, Clone)]
-pub enum QubitIndexing {
-    LittleEndian,
-    BigEndian,
-}
-
 /// Builds a permutation matrix P of size 2^n x 2^n
 /// that moves the qubits in targets to the front (lowest bits)
 /// while preserving the order of other qubits.
@@ -83,7 +76,6 @@ pub(crate) fn expand_unitary(
     n: usize,
     targets: &[usize],
     u: &Matrix<Complex>,
-    indexing: &QubitIndexing,
 ) -> Matrix<Complex> {
     if targets.is_empty() {
         return Matrix::eye(1 << n); // do nothing
@@ -97,10 +89,8 @@ pub(crate) fn expand_unitary(
 
     let i = Matrix::<Complex>::eye(1 << (n - k));
 
-    let u_kron = match indexing {
-        QubitIndexing::BigEndian => ops::kron(&u, &i),
-        QubitIndexing::LittleEndian => ops::kron(&i, &u),
-    };
+    // let u_kron = ops::kron(&u, &i); -> big endian
+    let u_kron = ops::kron(&i, &u);
 
     p_dagger.dot(&u_kron).dot(&p)
 }

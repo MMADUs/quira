@@ -21,6 +21,14 @@ use crate::bit::QuantumBit;
 use crate::operations::GateType;
 use crate::types::{Complex, Matrix, Vector};
 
+pub enum QuantumStateType {
+    StateVec,
+    Density,
+    CliffordStabilizer,
+    MatrixProductState,
+    Custom,
+}
+
 /// every kernel (quantum state) implements backend operation
 /// for executing circuit in the backend
 pub trait BackendOperation {

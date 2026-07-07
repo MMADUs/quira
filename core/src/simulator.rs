@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 use crate::bit::QuantumBit;
 use crate::circuit::{QuantumCircuit, QuantumInstructions, QubitOperation};
 use crate::constant::{C_ONE, C_ZERO};
-use crate::endian::QubitIndexing;
 use crate::io::{QuantumDebugger, QuantumState};
 use crate::noise::{NoNoise, NoiseChannelOperation, NoiseModel};
 use crate::operations::single_qubit::PauliX;
@@ -36,8 +35,6 @@ where
 {
     /// the quantum state vector.
     kernel: T,
-    /// qubit indexing when applying to quantum state.
-    qubit_indexing: QubitIndexing,
     /// classical register after simulation.
     classical_register: ClassicalRegister,
     /// noise model during simulation.
@@ -45,10 +42,9 @@ where
 }
 
 impl<T: QuantumState + QuantumDebugger + Clone> QuantumSimulator<T, NoNoise> {
-    pub fn new(state: T, indexing: QubitIndexing) -> Self {
+    pub fn new(state: T) -> Self {
         Self {
             kernel: state,
-            qubit_indexing: indexing,
             classical_register: ClassicalRegister::new(0),
             noise_model: NoiseModel::new(),
         }
@@ -75,11 +71,7 @@ impl<T: QuantumState + QuantumDebugger + Clone, N: NoiseChannelOperation> Quantu
         &self.classical_register
     }
 
-    /// Simulate a quantum circuit.
-    pub fn simulate(&mut self, circuit: QuantumCircuit) {
-        // prepare classical register
-        self.classical_register = circuit.creg_as_ref().clone();
-        // apply quantum operation based on tokens.
+    fn simulate_qubits(&mut self, circuit: &QuantumCircuit) {
         for circuit_ops in circuit.operations_as_ref() {
             match circuit_ops {
                 QuantumInstructions::Qubit(qb) => {
@@ -115,11 +107,20 @@ impl<T: QuantumState + QuantumDebugger + Clone, N: NoiseChannelOperation> Quantu
                             let measured_bit = self.kernel.measure_qubit(*qubit_idx);
                             // conditionally apply
                             if measured_bit == true {
-                                pauli_x.apply(&mut self.kernel, &self.qubit_indexing);
+                                pauli_x.apply(&mut self.kernel);
                             }
                         }
+
                     }
-                }
+                },
+                _ => (), // -> ignore the rest since we are simulating qubits first
+            }
+        }
+    }
+
+    fn simulate_operations(&mut self, circuit: &QuantumCircuit) {
+        for circuit_ops in circuit.operations_as_ref() {
+            match circuit_ops {
                 QuantumInstructions::Operations(ops) => {
                     if ops.construct_targets().len() > self.num_qubits() {
                         panic!(
@@ -128,7 +129,8 @@ impl<T: QuantumState + QuantumDebugger + Clone, N: NoiseChannelOperation> Quantu
                             self.num_qubits()
                         );
                     }
-                    ops.apply(&mut self.kernel, &self.qubit_indexing);
+                    ops.apply(&mut self.kernel);
+                    self.noise_model.simulate_noise(&mut self.kernel, ops);
                 }
                 QuantumInstructions::Conditional((classical_bit, if_measured, ops)) => {
                     if ops.construct_targets().len() > self.num_qubits() {
@@ -142,7 +144,8 @@ impl<T: QuantumState + QuantumDebugger + Clone, N: NoiseChannelOperation> Quantu
                     let measured = self.classical_register.get(*classical_bit);
                     // conditionally apply
                     if *if_measured == measured {
-                        ops.apply(&mut self.kernel, &self.qubit_indexing);
+                        ops.apply(&mut self.kernel);
+                        self.noise_model.simulate_noise(&mut self.kernel, ops);
                     }
                 }
                 QuantumInstructions::Measurements((qubit, classical_bit)) => {
@@ -163,8 +166,18 @@ impl<T: QuantumState + QuantumDebugger + Clone, N: NoiseChannelOperation> Quantu
                     }
                     self.classical_register = mcreg;
                 }
-                QuantumInstructions::Barrier => {}
+                _ => (), // -> ignore other than main operations.
             }
         }
+    }
+
+    /// Simulate a quantum circuit.
+    pub fn simulate(&mut self, circuit: QuantumCircuit) {
+        // prepare classical register
+        self.classical_register = circuit.creg_as_ref().clone();
+        self.simulate_qubits(&circuit);
+        let num_qubits = self.kernel.num_qubits();
+        self.noise_model.build_noise(num_qubits);
+        self.simulate_operations(&circuit);
     }
 }

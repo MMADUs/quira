@@ -22,7 +22,6 @@ use std::time::Instant;
 use crate::bit::QuantumBit;
 use crate::circuit::{QuantumCircuit, QuantumInstructions, QubitOperation};
 use crate::constant::{C_ONE, C_ZERO};
-use crate::endian::QubitIndexing;
 use crate::io::QuantumState;
 use crate::noise::{NoNoise, NoiseChannelOperation, NoiseModel};
 use crate::operations::single_qubit::PauliX;
@@ -43,8 +42,6 @@ where
     kernel: T,
     /// executed quantum circuit.
     circuits: Vec<QuantumCircuit>,
-    /// qubit indexing when applying to quantum state.
-    qubit_indexing: QubitIndexing,
     /// noise model during execution.
     noise_model: NoiseModel<N>,
     /// saved run result
@@ -53,11 +50,10 @@ where
 
 impl<T: QuantumState + Clone> QuantumJob<T, NoNoise> {
     /// create a new quantum backend with the given state.
-    pub fn new(state: T, indexing: QubitIndexing) -> Self {
+    pub fn new(state: T) -> Self {
         Self {
             kernel: state,
             circuits: Vec::new(),
-            qubit_indexing: indexing,
             noise_model: NoiseModel::new(),
             result: None,
         }
@@ -153,7 +149,7 @@ impl<T: QuantumState + Clone, N: NoiseChannelOperation> QuantumJob<T, N> {
                                             let measured_bit = qstate.measure_qubit(*qubit_idx);
                                             // conditionally apply
                                             if measured_bit == true {
-                                                pauli_x.apply(&mut qstate, &self.qubit_indexing);
+                                                pauli_x.apply(&mut qstate);
                                             }
                                         },
                                     }
@@ -166,7 +162,7 @@ impl<T: QuantumState + Clone, N: NoiseChannelOperation> QuantumJob<T, N> {
                                             qstate.num_qubits()
                                         );
                                     }
-                                    ops.apply(&mut qstate, &self.qubit_indexing);
+                                    ops.apply(&mut qstate);
                                 }
                                 QuantumInstructions::Conditional((
                                     classical_bit,
@@ -184,7 +180,7 @@ impl<T: QuantumState + Clone, N: NoiseChannelOperation> QuantumJob<T, N> {
                                     let measured = classical_register.get(*classical_bit);
                                     // conditionally apply
                                     if *if_measured == measured {
-                                        ops.apply(&mut qstate, &self.qubit_indexing);
+                                        ops.apply(&mut qstate);
                                     }
                                 }
                                 QuantumInstructions::Measurements((qubit, classical_bit)) => {

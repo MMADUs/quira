@@ -6,7 +6,6 @@
 use quira::include::{ClassicalRegister, QuantumCircuit, QuantumJob, QuantumRegister, StateVec};
 use quira::operation::singleq::Hadamard as H;
 use quira::operation::twoq::ControlledNot as CNOT;
-use quira::provider::QubitIndexing as QI;
 
 fn main() {
     // define register
@@ -26,7 +25,7 @@ fn main() {
     let backend = StateVec::new();
     // define job
     //
-    let mut job = QuantumJob::new(backend, QI::LittleEndian);
+    let mut job = QuantumJob::new(backend);
     job.from_circuit(circuit);
     // run job
     //
