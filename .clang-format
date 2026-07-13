@@ -1,0 +1,33 @@
+BasedOnStyle: Google
+Language: Cpp
+Standard: c++20
+
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 88
+
+AccessModifierOffset: -2
+NamespaceIndentation: None
+FixNamespaceComments: true
+
+BreakBeforeBraces: Attach
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^"quira/'
+    Priority: 1
+  - Regex: '^<Eigen/'
+    Priority: 2
+  - Regex: '^<.*>'
+    Priority: 3
+
+DerivePointerAlignment: false
+SpaceAfterTemplateKeyword: false

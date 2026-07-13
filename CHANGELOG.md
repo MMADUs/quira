@@ -1,0 +1,68 @@
+# Changelog
+
+## Version 0.1.0 - Unreleased
+
+- Initial C++ rewrite of Quira
+- Added CMake build setup
+- Added build script in [`scripts/build.sh`](scripts/build.sh)
+- Added public umbrella header `quira/quira.hpp`
+- Added core numeric aliases in `quira/types.hpp`
+  - `Index`
+  - `Qubit`
+  - `Clbit`
+  - `Complex`
+  - `Matrix`
+  - `Vector`
+- Added constants in `quira/constants.hpp`
+  - `PI`
+  - `SQRT_2`
+  - `INV_SQRT_2`
+- Implemented `quira::QuantumCircuit` for recording gate, measurement, reset,
+  and barrier instructions
+- Added circuit instruction types
+  - `GateInstruction`
+  - `MeasureInstruction`
+  - `ResetInstruction`
+  - `BarrierInstruction`
+  - `ClassicalCondition`
+- Added register types
+  - `QuantumBit`
+  - `QuantumRegister`
+  - `ClassicalBit`
+  - `ClassicalRegister`
+- Implemented `quira::QuantumGate` base interface
+- Added gate helper base classes
+  - `CloneableGate`
+  - `SingleQubit`
+  - `TwoQubit`
+  - `ThreeQubit`
+- Added common gates
+  - Single-qubit: `I`, `H`, `X`, `Y`, `Z`, `S`, `T`
+  - Two-qubit: `CNOT`, `CZ`, `SWAP`
+  - Three-qubit: `TOFFOLI`, `FREDKIN`
+- Added parameterized rotation gates
+  - `RX`
+  - `RY`
+  - `RZ`
+- Implemented `quira::StateVector` pure-state backend container
+- Implemented `quira::StateVectorSimulator`
+- Added `quira::SimulationOutput` for shot registers, counts, and probabilities
+- Added draft Quira exception hierarchy
+  - `QuiraException`
+  - `InvalidArgument`
+  - `OutOfRange`
+  - `InvalidQubit`
+  - `InvalidClbit`
+  - `InvalidGate`
+  - `InvalidCircuit`
+  - `InvalidState`
+  - `DimensionMismatch`
+  - `DuplicateQubit`
+  - `NullPointer`
+  - `SimulationError`
+  - `NotImplemented`
+- Added project configuration files
+  - `.clang-format`
+  - `.clang-tidy`
+  - `.gitattributes`
+  - `.gitignore`
