@@ -99,7 +99,7 @@ public:
 
   Qubit target() const noexcept { return target_; }
 
-private:
+protected:
   Qubit target_{};
 };
 
@@ -123,7 +123,7 @@ public:
   Qubit first() const noexcept { return first_; }
   Qubit second() const noexcept { return second_; }
 
-private:
+protected:
   Qubit first_{};
   Qubit second_{};
 };
@@ -150,7 +150,7 @@ public:
   Qubit second() const noexcept { return second_; }
   Qubit third() const noexcept { return third_; }
 
-private:
+protected:
   Qubit first_{};
   Qubit second_{};
   Qubit third_{};
