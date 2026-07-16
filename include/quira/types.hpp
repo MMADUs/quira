@@ -17,16 +17,133 @@
 #include <Eigen/Dense>
 
 #include <complex>
-#include <cstddef>
+#include <cstdint>
 
-namespace quira {
+namespace quira::types {
 
-using Index = std::size_t;
-using Qubit = std::size_t;
-using Clbit = std::size_t;
+/**
+ * @brief Bit index type
+ */
+#if defined(SMALL_BIT)
+using qubit = std::uint8_t;
+using clbit = std::uint8_t;
+#elif defined(LARGE_BIT)
+using qubit = std::size_t;
+using clbit = std::size_t;
+#else
+using qubit = std::uint8_t;
+using clbit = std::uint8_t;
+#endif
 
-using Complex = std::complex<double>;
-using Matrix = Eigen::MatrixXcd;
-using Vector = Eigen::VectorXcd;
+/**
+ * @brief Real number precision type
+ */
+#if defined(REAL_FLOAT)
+using real_n = float;
+#elif defined(REAL_DOUBLE)
+using real_n = double;
+#elif defined(REAL_LONG_DOUBLE)
+using real_n = long double;
+#else
+using real_n = double;
+#endif
 
-}  // namespace quira
+/**
+ * @brief Complex number type
+ */
+using cplx_n = std::complex<real_n>;
+
+/**
+ * @brief Dynamic Eigen matrix over the field specified by \a Scalar
+ *
+ * Example:
+ * @code
+ * // type of mat is Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>
+ * dyn_mat<float> mat(2, 3);
+ * @endcode
+ */
+template<typename Scalar>  // Eigen::MatrixX_type (where type = Scalar)
+using dyn_mat = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
+
+/**
+ * @brief Dynamic Eigen column vector over the field specified by \a Scalar
+ *
+ * Example:
+ * @code
+ * // type of col_vect is Eigen::Matrix<float, Eigen::Dynamic, 1>
+ * dyn_col_vect<float> col_vect(2);
+ * @endcode
+ */
+template<typename Scalar>  // Eigen::VectorX_type (where type = Scalar)
+using dyn_col_vect = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+
+/**
+ * @brief Dynamic Eigen row vector over the field specified by \a Scalar
+ *
+ * Example:
+ * @code
+ * // type of row_vect is Eigen::Matrix<float, 1, Eigen::Dynamic>
+ * dyn_row_vect<float> row_vect(3);
+ * @endcode
+ */
+template<typename Scalar>  // Eigen::RowVectorX_type (where type = Scalar)
+using dyn_row_vect = Eigen::Matrix<Scalar, 1, Eigen::Dynamic>;
+
+/**
+ * @brief Complex number with real number precision dynamic Eigen column vector
+ */
+using ket = dyn_col_vect<cplx_n>;
+
+/**
+ * @brief Complex number with real number precision dynamic Eigen row vector
+ */
+using bra = dyn_row_vect<cplx_n>;
+
+/**
+ * @brief Complex number with real number precision dynamic Eigen matrix
+ */
+using cmat = dyn_mat<cplx_n>;
+
+/**
+ * @brief Real number precision dynamic Eigen matrix
+ */
+using rmat = dyn_mat<real_n>;
+
+/**
+ * @brief Textual representation (Dirac notation) of a quantum state/matrix over
+ * the field specified by \a Scalar
+ *
+ * @see qpp::dirac()
+ */
+template<typename Scalar>
+// NOLINTNEXTLINE(readability-identifier-naming)
+struct dirac_t {
+  std::vector<std::size_t> dims_rows{};  ///< row dimensions
+  std::vector<std::size_t> dims_cols{};  ///< column dimensions
+  std::vector<std::pair<Scalar, std::vector<std::size_t>>>
+      states{};  ///< vector of (amplitude, dits)
+
+  /**
+   * @brief Equality operator
+   *
+   * @param rhs dirac_t object against which the equality is being tested
+   * @return True if the dirac_t objects are equal (component-wise), false
+   * otherwise
+   */
+  bool operator==(const dirac_t& rhs) const {
+    return std::tie(dims_rows, dims_cols, states) ==
+           std::tie(rhs.dims_rows, rhs.dims_cols, rhs.states);
+  }
+
+  /**
+   * @brief Inequality operator
+   *
+   * @param rhs dirac_t object against which the inequality is being tested
+   * @return True if the dirac_t objects are not equal (component-wise),
+   * false otherwise
+   */
+
+  bool operator!=(const dirac_t& rhs) const { return !(*this == rhs); }
+};
+
+}  // namespace quira::types
