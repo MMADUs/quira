@@ -14,11 +14,44 @@
 
 #pragma once
 
-namespace quira {
+#include <numbers>
+#include <quira/types.hpp>
 
-inline constexpr double PI = 3.141592653589793238462643383279502884;
+namespace quira::constants {
 
-inline constexpr double SQRT_2 = 1.414213562373095048801688724209698079;
-inline constexpr double INV_SQRT_2 = 1.0 / SQRT_2;
+/**
+ * @brief Represent the constant pi = 3.141592653589793238462643383279502884...
+ */
+inline constexpr types::real_n PI = std::numbers::pi;
 
-}  // namespace quira
+/**
+ * @brief Represent the sqrt of 2 = 1.414213562373095048801688724209698079...
+ */
+inline constexpr types::real_n SQRT_2 = std::numbers::sqrt2;
+
+/**
+ * @brief Represent the inverse sqrt of 2 = 0.707106781186547524400844362104849...
+ */
+inline constexpr types::real_n INV_SQRT_2 = 1.0 / SQRT_2;
+
+/**
+ * @brief Represent the constant epsilon 10^{-12} for thresholding
+ */
+inline constexpr types::real_n EPS = 1e-12;
+
+/**
+ * @brief Represent the complex number of 0 = 0.0 + 0.0i
+ */
+inline constexpr types::cplx_n ZERO = types::cplx_n{0.0, 0.0};
+
+/**
+ * @brief Represent the complex number of 1 = 1.0 + 0.0i
+ */
+inline constexpr types::cplx_n ONE = types::cplx_n{1.0, 0.0};
+
+/**
+ * @brief Represent the imaginary i = 0.0 + 1.0i or sqrt(-1)
+ */
+inline constexpr types::cplx_n IM = types::cplx_n{0.0, 1.0};
+
+}  // namespace quira::constants
