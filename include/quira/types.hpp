@@ -55,38 +55,20 @@ using cplx_n = std::complex<real_n>;
 
 /**
  * @brief Dynamic Eigen matrix over the field specified by \a Scalar
- *
- * Example:
- * @code
- * // type of mat is Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>
- * dyn_mat<float> mat(2, 3);
- * @endcode
  */
-template<typename Scalar>  // Eigen::MatrixX_type (where type = Scalar)
+template<typename Scalar>
 using dyn_mat = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
 
 /**
- * @brief Dynamic Eigen column vector over the field specified by \a Scalar
- *
- * Example:
- * @code
- * // type of col_vect is Eigen::Matrix<float, Eigen::Dynamic, 1>
- * dyn_col_vect<float> col_vect(2);
- * @endcode
+ * @brief Dynamic Eigen column vector over the field specified by Scalar
  */
-template<typename Scalar>  // Eigen::VectorX_type (where type = Scalar)
+template<typename Scalar>
 using dyn_col_vect = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
 /**
- * @brief Dynamic Eigen row vector over the field specified by \a Scalar
- *
- * Example:
- * @code
- * // type of row_vect is Eigen::Matrix<float, 1, Eigen::Dynamic>
- * dyn_row_vect<float> row_vect(3);
- * @endcode
+ * @brief Dynamic Eigen row vector over the field specified by Scalar
  */
-template<typename Scalar>  // Eigen::RowVectorX_type (where type = Scalar)
+template<typename Scalar>
 using dyn_row_vect = Eigen::Matrix<Scalar, 1, Eigen::Dynamic>;
 
 /**
@@ -102,18 +84,15 @@ using bra = dyn_row_vect<cplx_n>;
 /**
  * @brief Complex number with real number precision dynamic Eigen matrix
  */
-using cmat = dyn_mat<cplx_n>;
+using c_mat = dyn_mat<cplx_n>;
 
 /**
  * @brief Real number precision dynamic Eigen matrix
  */
-using rmat = dyn_mat<real_n>;
+using r_mat = dyn_mat<real_n>;
 
 /**
- * @brief Textual representation (Dirac notation) of a quantum state/matrix over
- * the field specified by \a Scalar
- *
- * @see qpp::dirac()
+ * @brief Textual representation (Dirac notation) of a quantum state
  */
 template<typename Scalar>
 // NOLINTNEXTLINE(readability-identifier-naming)
