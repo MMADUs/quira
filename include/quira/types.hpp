@@ -125,4 +125,19 @@ struct dirac_t {
   bool operator!=(const dirac_t& rhs) const { return !(*this == rhs); }
 };
 
+/**
+ * @brief Variant type-matching utility for std::visit
+ * @tparam Ts Type list
+ */
+template<class... Ts>
+struct Overloaded : Ts... {
+  using Ts::operator()...;
+};
+
+/**
+ * @brief Template deduction rule
+ */
+template<class... Ts>
+Overloaded(Ts...) -> Overloaded<Ts...>;
+
 }  // namespace quira::types
