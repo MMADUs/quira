@@ -16,7 +16,7 @@
 
 #include <utility>
 
-namespace quira {
+namespace quira::exception {
 
 const char* to_string(ErrorCode code) noexcept {
   switch (code) {
@@ -30,18 +30,14 @@ const char* to_string(ErrorCode code) noexcept {
       return "InvalidQubit";
     case ErrorCode::InvalidClbit:
       return "InvalidClbit";
-    case ErrorCode::InvalidGate:
-      return "InvalidGate";
-    case ErrorCode::InvalidCircuit:
-      return "InvalidCircuit";
     case ErrorCode::InvalidState:
       return "InvalidState";
     case ErrorCode::DimensionMismatch:
       return "DimensionMismatch";
-    case ErrorCode::DuplicateQubit:
-      return "DuplicateQubit";
     case ErrorCode::NullPointer:
       return "NullPointer";
+    case ErrorCode::NumericError:
+      return "NumericError";
     case ErrorCode::SimulationError:
       return "SimulationError";
     case ErrorCode::NotImplemented:
@@ -86,6 +82,7 @@ std::string QuiraException::format_message(ErrorCode code, const std::string& wh
 
   formatted += ": ";
   formatted += message;
+
   return formatted;
 }
 
@@ -121,22 +118,6 @@ InvalidClbit::InvalidClbit(std::string where, std::string message)
     : QuiraException(ErrorCode::InvalidClbit, std::move(where), std::move(message)) {
 }
 
-InvalidGate::InvalidGate(std::string message)
-    : QuiraException(ErrorCode::InvalidGate, std::move(message)) {
-}
-
-InvalidGate::InvalidGate(std::string where, std::string message)
-    : QuiraException(ErrorCode::InvalidGate, std::move(where), std::move(message)) {
-}
-
-InvalidCircuit::InvalidCircuit(std::string message)
-    : QuiraException(ErrorCode::InvalidCircuit, std::move(message)) {
-}
-
-InvalidCircuit::InvalidCircuit(std::string where, std::string message)
-    : QuiraException(ErrorCode::InvalidCircuit, std::move(where), std::move(message)) {
-}
-
 InvalidState::InvalidState(std::string message)
     : QuiraException(ErrorCode::InvalidState, std::move(message)) {
 }
@@ -152,14 +133,6 @@ DimensionMismatch::DimensionMismatch(std::string message)
 DimensionMismatch::DimensionMismatch(std::string where, std::string message)
     : QuiraException(ErrorCode::DimensionMismatch, std::move(where),
                      std::move(message)) {
-}
-
-DuplicateQubit::DuplicateQubit(std::string message)
-    : QuiraException(ErrorCode::DuplicateQubit, std::move(message)) {
-}
-
-DuplicateQubit::DuplicateQubit(std::string where, std::string message)
-    : QuiraException(ErrorCode::DuplicateQubit, std::move(where), std::move(message)) {
 }
 
 NullPointer::NullPointer(std::string message)
@@ -186,4 +159,4 @@ NotImplemented::NotImplemented(std::string where, std::string message)
     : QuiraException(ErrorCode::NotImplemented, std::move(where), std::move(message)) {
 }
 
-}  // namespace quira
+}  // namespace quira::exception

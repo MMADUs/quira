@@ -14,10 +14,11 @@
 
 #pragma once
 
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 
-namespace quira {
+namespace quira::exception {
 
 /**
  * @brief Stable error categories used by Quira exceptions.
@@ -25,18 +26,16 @@ namespace quira {
  * ErrorCode gives users a lightweight way to branch on failure categories
  * without parsing exception messages.
  */
-enum class ErrorCode {
+enum class ErrorCode : std::uint8_t {
   Unknown,
   InvalidArgument,
   OutOfRange,
   InvalidQubit,
   InvalidClbit,
-  InvalidGate,
-  InvalidCircuit,
   InvalidState,
   DimensionMismatch,
-  DuplicateQubit,
   NullPointer,
+  NumericError,
   SimulationError,
   NotImplemented
 };
@@ -142,25 +141,7 @@ public:
 };
 
 /**
- * @brief Error for invalid gate objects, gate targets, or gate matrices.
- */
-class InvalidGate : public QuiraException {
-public:
-  explicit InvalidGate(std::string message);
-  InvalidGate(std::string where, std::string message);
-};
-
-/**
- * @brief Error for invalid circuit structure or circuit operations.
- */
-class InvalidCircuit : public QuiraException {
-public:
-  explicit InvalidCircuit(std::string message);
-  InvalidCircuit(std::string where, std::string message);
-};
-
-/**
- * @brief Error for invalid quantum state vectors or backend state.
+ * @brief Error for invalid quantum state.
  */
 class InvalidState : public QuiraException {
 public:
@@ -178,21 +159,21 @@ public:
 };
 
 /**
- * @brief Error for duplicate qubit indices where distinct qubits are required.
- */
-class DuplicateQubit : public QuiraException {
-public:
-  explicit DuplicateQubit(std::string message);
-  DuplicateQubit(std::string where, std::string message);
-};
-
-/**
  * @brief Error for null owning pointers passed into public APIs.
  */
 class NullPointer : public QuiraException {
 public:
   explicit NullPointer(std::string message);
   NullPointer(std::string where, std::string message);
+};
+
+/**
+ * @brief Error for numerical computation failure.
+ */
+class NumericError : public QuiraException {
+public:
+  explicit NumericError(std::string message);
+  NumericError(std::string where, std::string message);
 };
 
 /**
@@ -213,4 +194,4 @@ public:
   NotImplemented(std::string where, std::string message);
 };
 
-}  // namespace quira
+}  // namespace quira::exception
