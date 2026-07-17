@@ -12,22 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "quira/exception.hpp"
 #include "quira/register.hpp"
 
 #include <sstream>
-#include <stdexcept>
 
 namespace quira {
 
-/**
- * Classical bit.
- *
- * Holds one optional measurement outcome.
- */
-ClassicalBit::ClassicalBit(Clbit index) : index_(index) {
+ClassicalBit::ClassicalBit(types::clbit index) : index_(index) {
 }
 
-Clbit ClassicalBit::index() const noexcept {
+types::clbit ClassicalBit::index() const noexcept {
   return index_;
 }
 
@@ -38,9 +33,10 @@ bool ClassicalBit::has_value() const noexcept {
 bool ClassicalBit::value() const {
   if (!value_) {
     std::ostringstream oss;
-    oss << "Classical bit " << index_ << " has no measurement outcome";
-    throw std::runtime_error(oss.str());
+    oss << "classical bit " << index_ << " has no measurement outcome";
+    throw exception::InvalidClbit("ClassicalBit::value()", oss.str());
   }
+
   return *value_;
 }
 
@@ -56,38 +52,34 @@ void ClassicalBit::clear() noexcept {
   value_.reset();
 }
 
-/**
- * Classical register.
- *
- * Stores measurement outcomes in classical bit index order.
- */
-ClassicalRegister::ClassicalRegister(Index size) {
+ClassicalRegister::ClassicalRegister(std::size_t size) {
   bits_.reserve(size);
-  for (Clbit bit = 0; bit < size; ++bit) {
-    bits_.emplace_back(bit);
+
+  for (std::size_t i = 0; i < size; ++i) {
+    bits_.emplace_back(static_cast<types::clbit>(i));
   }
 }
 
-Index ClassicalRegister::size() const noexcept {
+std::size_t ClassicalRegister::size() const noexcept {
   return bits_.size();
 }
 
-bool ClassicalRegister::has_value(Clbit clbit) const {
+bool ClassicalRegister::has_value(types::clbit clbit) const {
   validate_clbit(clbit);
   return bits_[clbit].has_value();
 }
 
-bool ClassicalRegister::get(Clbit clbit) const {
+bool ClassicalRegister::get(types::clbit clbit) const {
   validate_clbit(clbit);
   return bits_[clbit].value();
 }
 
-std::optional<bool> ClassicalRegister::get_raw(Clbit clbit) const {
+std::optional<bool> ClassicalRegister::get_raw(types::clbit clbit) const {
   validate_clbit(clbit);
   return bits_[clbit].raw_value();
 }
 
-void ClassicalRegister::set(Clbit clbit, bool value) {
+void ClassicalRegister::set(types::clbit clbit, bool value) {
   validate_clbit(clbit);
   bits_[clbit].set(value);
 }
@@ -104,8 +96,9 @@ std::string ClassicalRegister::bit_string() const {
 
   // Match Qiskit display order: highest classical bit on the left, c0 on the
   // right. Unset bits are still skipped for the current output behavior.
-  for (Index index = bits_.size(); index > 0; --index) {
+  for (std::size_t index = bits_.size(); index > 0; --index) {
     const ClassicalBit& bit = bits_[index - 1];
+
     if (bit.has_value()) {
       result.push_back(bit.value() ? '1' : '0');
     }
@@ -118,12 +111,13 @@ const std::vector<ClassicalBit>& ClassicalRegister::bits() const noexcept {
   return bits_;
 }
 
-void ClassicalRegister::validate_clbit(Clbit clbit) const {
+void ClassicalRegister::validate_clbit(types::clbit clbit) const {
   if (clbit >= bits_.size()) {
     std::ostringstream oss;
-    oss << "Classical bit index " << clbit << " is out of range for register with "
+    oss << "classical bit index " << clbit << " is out of range for register with "
         << bits_.size() << " bits";
-    throw std::out_of_range(oss.str());
+
+    throw exception::OutOfRange("ClassicalRegister::validate_clbit()", oss.str());
   }
 }
 
