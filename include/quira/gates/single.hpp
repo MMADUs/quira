@@ -20,84 +20,84 @@ namespace quira {
 /**
  * Identity gate.
  */
-class Identity final : public SingleQubit<Identity> {
+class I final : public SingleQubit<I> {
 public:
-  explicit Identity(Qubit target);
+  explicit I(types::qubit target);
 
   std::string name() const override;
-  Matrix unitary() const override;
+  types::c_mat unitary() const override;
 };
 
 /**
  * Hadamard gate.
  */
-class Hadamard final : public SingleQubit<Hadamard> {
+class H final : public SingleQubit<H> {
 public:
-  explicit Hadamard(Qubit target);
+  explicit H(types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
+  types::c_mat unitary() const override;
 };
 
 /**
  * Pauli X gate.
  */
-class PauliX final : public SingleQubit<PauliX> {
+class X final : public SingleQubit<X> {
 public:
-  explicit PauliX(Qubit target);
+  explicit X(types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
+  types::c_mat unitary() const override;
 };
 
 /**
  * Pauli Y gate.
  */
-class PauliY final : public SingleQubit<PauliY> {
+class Y final : public SingleQubit<Y> {
 public:
-  explicit PauliY(Qubit target);
+  explicit Y(types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
+  types::c_mat unitary() const override;
 };
 
 /**
  * Pauli Z gate.
  */
-class PauliZ final : public SingleQubit<PauliZ> {
+class Z final : public SingleQubit<Z> {
 public:
-  explicit PauliZ(Qubit target);
+  explicit Z(types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
+  types::c_mat unitary() const override;
 };
 
 /**
  * S phase gate: diag(1, i).
  */
-class SGate final : public SingleQubit<SGate> {
+class S final : public SingleQubit<S> {
 public:
-  explicit SGate(Qubit target);
+  explicit S(types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
+  types::c_mat unitary() const override;
 };
 
 /**
  * T phase gate: diag(1, exp(i*pi/4)).
  */
-class TGate final : public SingleQubit<TGate> {
+class T final : public SingleQubit<T> {
 public:
-  explicit TGate(Qubit target);
+  explicit T(types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
+  types::c_mat unitary() const override;
 };
 
 }  // namespace quira

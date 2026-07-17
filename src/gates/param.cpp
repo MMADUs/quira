@@ -14,16 +14,17 @@
 
 #include "quira/gates/param.hpp"
 
+#include "quira/constants.hpp"
+
 #include <cmath>
-#include <complex>
 #include <sstream>
 
 namespace quira {
+
 namespace {
 
-const Complex I{0.0, 1.0};
-
-std::string rotation_gate_name(const char* gate_name, Qubit target, double theta) {
+std::string rotation_gate_name(const char* gate_name, types::qubit target,
+                               types::real_n theta) {
   std::ostringstream oss;
   oss << gate_name << "(target=" << target << ", theta=" << theta << ")";
   return oss.str();
@@ -31,66 +32,69 @@ std::string rotation_gate_name(const char* gate_name, Qubit target, double theta
 
 }  // namespace
 
-RotateX::RotateX(Qubit target, double theta)
-    : SingleQubit<RotateX>(target), theta_(theta) {
+RX::RX(types::qubit target, types::real_n theta)
+    : SingleQubit<RX>(target), theta_(theta) {
 }
 
-std::string RotateX::name() const {
-  return rotation_gate_name("RX", target_, theta_);
+std::string RX::name() const {
+  return rotation_gate_name("RX", target(), theta_);
 }
 
-Matrix RotateX::unitary() const {
-  const double c = std::cos(theta_ / 2.0);
-  const double s = std::sin(theta_ / 2.0);
+types::c_mat RX::unitary() const {
+  const types::real_n c = std::cos(theta_ / 2.0);
+  const types::real_n s = std::sin(theta_ / 2.0);
 
-  Matrix matrix(2, 2);
-  matrix << Complex{c, 0.0}, Complex{0.0, -s}, Complex{0.0, -s}, Complex{c, 0.0};
+  types::c_mat matrix(2, 2);
+  matrix << types::cplx_n{c, 0.0}, types::cplx_n{0.0, -s}, types::cplx_n{0.0, -s},
+      types::cplx_n{c, 0.0};
   return matrix;
 }
 
-double RotateX::theta() const noexcept {
+types::real_n RX::theta() const noexcept {
   return theta_;
 }
 
-RotateY::RotateY(Qubit target, double theta)
-    : SingleQubit<RotateY>(target), theta_(theta) {
+RY::RY(types::qubit target, types::real_n theta)
+    : SingleQubit<RY>(target), theta_(theta) {
 }
 
-std::string RotateY::name() const {
-  return rotation_gate_name("RY", target_, theta_);
+std::string RY::name() const {
+  return rotation_gate_name("RY", target(), theta_);
 }
 
-Matrix RotateY::unitary() const {
-  const double c = std::cos(theta_ / 2.0);
-  const double s = std::sin(theta_ / 2.0);
+types::c_mat RY::unitary() const {
+  const types::real_n c = std::cos(theta_ / 2.0);
+  const types::real_n s = std::sin(theta_ / 2.0);
 
-  Matrix matrix(2, 2);
-  matrix << Complex{c, 0.0}, Complex{-s, 0.0}, Complex{s, 0.0}, Complex{c, 0.0};
+  types::c_mat matrix(2, 2);
+  matrix << types::cplx_n{c, 0.0}, types::cplx_n{-s, 0.0}, types::cplx_n{s, 0.0},
+      types::cplx_n{c, 0.0};
   return matrix;
 }
 
-double RotateY::theta() const noexcept {
+types::real_n RY::theta() const noexcept {
   return theta_;
 }
 
-RotateZ::RotateZ(Qubit target, double theta)
-    : SingleQubit<RotateZ>(target), theta_(theta) {
+RZ::RZ(types::qubit target, types::real_n theta)
+    : SingleQubit<RZ>(target), theta_(theta) {
 }
 
-std::string RotateZ::name() const {
-  return rotation_gate_name("RZ", target_, theta_);
+std::string RZ::name() const {
+  return rotation_gate_name("RZ", target(), theta_);
 }
 
-Matrix RotateZ::unitary() const {
-  const Complex negative_phase = std::exp(-I * (theta_ / 2.0));
-  const Complex positive_phase = std::exp(I * (theta_ / 2.0));
+types::c_mat RZ::unitary() const {
+  const types::cplx_n negative_phase = std::exp(-constants::IM * (theta_ / 2.0));
+  const types::cplx_n positive_phase = std::exp(constants::IM * (theta_ / 2.0));
 
-  Matrix matrix(2, 2);
-  matrix << negative_phase, Complex{0.0, 0.0}, Complex{0.0, 0.0}, positive_phase;
+  types::c_mat matrix(2, 2);
+  matrix << negative_phase, types::cplx_n{0.0, 0.0}, types::cplx_n{0.0, 0.0},
+      positive_phase;
   return matrix;
 }
 
-double RotateZ::theta() const noexcept {
+types::real_n RZ::theta() const noexcept {
   return theta_;
 }
 

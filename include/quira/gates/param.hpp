@@ -15,54 +15,55 @@
 #pragma once
 
 #include "quira/gate.hpp"
+#include "quira/types.hpp"
 
 namespace quira {
 /**
  * Rotate X gate.
  */
-class RotateX final : public SingleQubit<RotateX> {
+class RX final : public SingleQubit<RX> {
 public:
-  RotateX(Qubit target, double theta);
+  RX(types::qubit target, types::real_n theta);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
-  double theta() const noexcept;
+  types::c_mat unitary() const override;
+  types::real_n theta() const noexcept;
 
 private:
-  double theta_{};
+  types::real_n theta_{};
 };
 
 /**
  * Rotate Y gate.
  */
-class RotateY final : public SingleQubit<RotateY> {
+class RY final : public SingleQubit<RY> {
 public:
-  RotateY(Qubit target, double theta);
+  RY(types::qubit target, types::real_n theta);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
-  double theta() const noexcept;
+  types::c_mat unitary() const override;
+  types::real_n theta() const noexcept;
 
 private:
-  double theta_{};
+  types::real_n theta_{};
 };
 
 /**
  * Rotate Z gate.
  */
-class RotateZ final : public SingleQubit<RotateZ> {
+class RZ final : public SingleQubit<RZ> {
 public:
-  RotateZ(Qubit target, double theta);
+  RZ(types::qubit target, types::real_n theta);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
-  double theta() const noexcept;
+  types::c_mat unitary() const override;
+  types::real_n theta() const noexcept;
 
 private:
-  double theta_{};
+  types::real_n theta_{};
 };
 
 }  // namespace quira

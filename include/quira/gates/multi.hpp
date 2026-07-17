@@ -17,34 +17,37 @@
 #include "quira/gate.hpp"
 
 namespace quira {
+
 /**
- * Toffoli gate, also known as controlled-controlled-X.
+ * @brief Toffoli gate, also known as controlled-controlled-X.
  */
-class Toffoli final : public ThreeQubit<Toffoli> {
+class Toff final : public MultiQubit<Toff> {
 public:
-  Toffoli(Qubit first_control, Qubit second_control, Qubit target);
+  Toff(types::qubit first_control, types::qubit second_control, types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
-  Qubit first_control() const noexcept;
-  Qubit second_control() const noexcept;
-  Qubit target() const noexcept;
+  types::c_mat unitary() const override;
+
+  types::qubit first_control() const noexcept;
+  types::qubit second_control() const noexcept;
+  types::qubit target() const noexcept;
 };
 
 /**
- * Fredkin gate, also known as controlled-SWAP.
+ * @brief Fredkin gate, also known as controlled-SWAP.
  */
-class Fredkin final : public ThreeQubit<Fredkin> {
+class Fred final : public MultiQubit<Fred> {
 public:
-  Fredkin(Qubit control, Qubit first_target, Qubit second_target);
+  Fred(types::qubit control, types::qubit first_target, types::qubit second_target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
-  Qubit control() const noexcept;
-  Qubit first_target() const noexcept;
-  Qubit second_target() const noexcept;
+  types::c_mat unitary() const override;
+
+  types::qubit control() const noexcept;
+  types::qubit first_target() const noexcept;
+  types::qubit second_target() const noexcept;
 };
 
 }  // namespace quira

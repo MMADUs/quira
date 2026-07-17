@@ -48,14 +48,14 @@ public:
   /**
    * @brief Returns the unitary matrix representation of the gate.
    */
-  [[nodiscard]] virtual Matrix unitary() const = 0;
+  [[nodiscard]] virtual types::c_mat unitary() const = 0;
 
   /**
    * @brief Returns the qubits acted on by the gate.
    *
    * @return Target qubits in the order expected by the gate matrix.
    */
-  [[nodiscard]] virtual std::vector<Qubit> targets() const = 0;
+  [[nodiscard]] virtual std::vector<types::qubit> targets() const = 0;
 
   /**
    * @brief Returns a heap-allocated copy of the concrete gate.
@@ -93,14 +93,14 @@ public:
 template<typename Derived>
 class SingleQubit : public CloneableGate<Derived> {
 public:
-  explicit SingleQubit(Qubit target) : target_(target) {}
+  explicit SingleQubit(types::qubit target) : target_(target) {}
 
-  [[nodiscard]] std::vector<Qubit> targets() const override { return {target_}; }
+  [[nodiscard]] std::vector<types::qubit> targets() const override { return {target_}; }
 
-  Qubit target() const noexcept { return target_; }
+  types::qubit target() const noexcept { return target_; }
 
-protected:
-  Qubit target_{};
+private:
+  types::qubit target_{};
 };
 
 /**
@@ -114,46 +114,44 @@ protected:
 template<typename Derived>
 class TwoQubit : public CloneableGate<Derived> {
 public:
-  TwoQubit(Qubit first, Qubit second) : first_(first), second_(second) {}
+  TwoQubit(types::qubit first, types::qubit second) : first_(first), second_(second) {}
 
-  [[nodiscard]] std::vector<Qubit> targets() const override {
+  [[nodiscard]] std::vector<types::qubit> targets() const override {
     return {first_, second_};
   }
 
-  Qubit first() const noexcept { return first_; }
-  Qubit second() const noexcept { return second_; }
+  types::qubit first() const noexcept { return first_; }
+  types::qubit second() const noexcept { return second_; }
 
-protected:
-  Qubit first_{};
-  Qubit second_{};
+private:
+  types::qubit first_{};
+  types::qubit second_{};
 };
 
 /**
- * @brief Base class for cloneable three-qubit gates.
+ * @brief Base class for cloneable multi-gates acting on three or more qubits.
  *
  * @tparam Derived Concrete gate type.
  *
- * @note Concrete gates may expose semantic accessors such as first_control(),
- * second_control(), control(), target(), first_target(), or second_target().
+ * Stores an ordered target-qubit list and implements QuantumGate::targets().
+ * Concrete gates can expose semantic accessors such as control(), target(),
+ * first_control(), or second_target() when those names make the API clearer.
  */
 template<typename Derived>
-class ThreeQubit : public CloneableGate<Derived> {
+class MultiQubit : public CloneableGate<Derived> {
 public:
-  ThreeQubit(Qubit first, Qubit second, Qubit third)
-      : first_(first), second_(second), third_(third) {}
+  explicit MultiQubit(std::vector<types::qubit> targets)
+      : targets_(std::move(targets)) {}
 
-  [[nodiscard]] std::vector<Qubit> targets() const override {
-    return {first_, second_, third_};
-  }
-
-  Qubit first() const noexcept { return first_; }
-  Qubit second() const noexcept { return second_; }
-  Qubit third() const noexcept { return third_; }
+  [[nodiscard]] std::vector<types::qubit> targets() const override { return targets_; }
 
 protected:
-  Qubit first_{};
-  Qubit second_{};
-  Qubit third_{};
+  [[nodiscard]] const std::vector<types::qubit>& target_list() const noexcept {
+    return targets_;
+  }
+
+private:
+  std::vector<types::qubit> targets_;
 };
 
 }  // namespace quira

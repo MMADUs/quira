@@ -20,29 +20,29 @@ namespace quira {
 /**
  * Controlled-NOT gate.
  */
-class ControlledNot final : public TwoQubit<ControlledNot> {
+class CNOT final : public TwoQubit<CNOT> {
 public:
-  ControlledNot(Qubit control, Qubit target);
+  CNOT(types::qubit control, types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
-  Qubit control() const noexcept;
-  Qubit target() const noexcept;
+  types::c_mat unitary() const override;
+  types::qubit control() const noexcept;
+  types::qubit target() const noexcept;
 };
 
 /**
  * Controlled-Z gate.
  */
-class ControlledZ final : public TwoQubit<ControlledZ> {
+class CZ final : public TwoQubit<CZ> {
 public:
-  ControlledZ(Qubit control, Qubit target);
+  CZ(types::qubit control, types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
-  Qubit control() const noexcept;
-  Qubit target() const noexcept;
+  types::c_mat unitary() const override;
+  types::qubit control() const noexcept;
+  types::qubit target() const noexcept;
 };
 
 /**
@@ -50,11 +50,11 @@ public:
  */
 class Swap final : public TwoQubit<Swap> {
 public:
-  Swap(Qubit first, Qubit second);
+  Swap(types::qubit control, types::qubit target);
 
   std::string name() const override;
 
-  Matrix unitary() const override;
+  types::c_mat unitary() const override;
 };
 
 }  // namespace quira

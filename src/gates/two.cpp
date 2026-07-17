@@ -14,98 +14,88 @@
 
 #include "quira/gates/two.hpp"
 
+#include "quira/constants.hpp"
+#include "quira/exception.hpp"
+
 #include <sstream>
-#include <stdexcept>
 #include <unordered_set>
+#include <vector>
 
 namespace quira {
+
 namespace {
 
-void validate_distinct_qubits(const char* gate_name, const std::vector<Qubit>& qubits) {
-  std::unordered_set<Qubit> seen;
-  for (Qubit qubit : qubits) {
+void validate_distinct_qubits(const char* gate_name,
+                              const std::vector<types::qubit>& qubits) {
+  std::unordered_set<types::qubit> seen;
+
+  for (types::qubit qubit : qubits) {
     if (!seen.insert(qubit).second) {
       std::ostringstream oss;
       oss << gate_name << " received duplicate qubit index " << qubit;
-      throw std::invalid_argument(oss.str());
+      throw exception::InvalidArgument(gate_name, oss.str());
     }
   }
 }
 
 }  // namespace
 
-/**
- * Controlled-NOT.
- *
- * Flips the target qubit when the control qubit is in the |1> state.
- */
-ControlledNot::ControlledNot(Qubit control, Qubit target)
-    : TwoQubit<ControlledNot>(control, target) {
-  validate_distinct_qubits("CNOT", {first_, second_});
+CNOT::CNOT(types::qubit control, types::qubit target)
+    : TwoQubit<CNOT>(control, target) {
+  validate_distinct_qubits("CNOT", {control, target});
 }
 
-std::string ControlledNot::name() const {
+std::string CNOT::name() const {
   std::ostringstream oss;
   oss << "CNOT(control=" << control() << ", target=" << target() << ")";
   return oss.str();
 }
 
-Matrix ControlledNot::unitary() const {
-  Matrix matrix = Matrix::Zero(4, 4);
+types::c_mat CNOT::unitary() const {
+  types::c_mat matrix = types::c_mat::Zero(4, 4);
 
-  matrix(0, 0) = 1.0;
-  matrix(3, 1) = 1.0;
-  matrix(2, 2) = 1.0;
-  matrix(1, 3) = 1.0;
+  matrix(0, 0) = constants::ONE;
+  matrix(3, 1) = constants::ONE;
+  matrix(2, 2) = constants::ONE;
+  matrix(1, 3) = constants::ONE;
 
   return matrix;
 }
 
-Qubit ControlledNot::control() const noexcept {
-  return first_;
+types::qubit CNOT::control() const noexcept {
+  return first();
 }
 
-Qubit ControlledNot::target() const noexcept {
-  return second_;
+types::qubit CNOT::target() const noexcept {
+  return second();
 }
 
-/**
- * Controlled-Z.
- *
- * Applies a phase flip when both qubits are in the |1> state.
- */
-ControlledZ::ControlledZ(Qubit control, Qubit target)
-    : TwoQubit<ControlledZ>(control, target) {
-  validate_distinct_qubits("CZ", {first_, second_});
+CZ::CZ(types::qubit control, types::qubit target) : TwoQubit<CZ>(control, target) {
+  validate_distinct_qubits("CZ", {control, target});
 }
 
-std::string ControlledZ::name() const {
+std::string CZ::name() const {
   std::ostringstream oss;
   oss << "CZ(control=" << control() << ", target=" << target() << ")";
   return oss.str();
 }
 
-Matrix ControlledZ::unitary() const {
-  Matrix matrix = Matrix::Identity(4, 4);
-  matrix(3, 3) = -1.0;
+types::c_mat CZ::unitary() const {
+  types::c_mat matrix = types::c_mat::Identity(4, 4);
+  matrix(3, 3) = -constants::ONE;
   return matrix;
 }
 
-Qubit ControlledZ::control() const noexcept {
-  return first_;
+types::qubit CZ::control() const noexcept {
+  return first();
 }
 
-Qubit ControlledZ::target() const noexcept {
-  return second_;
+types::qubit CZ::target() const noexcept {
+  return second();
 }
 
-/**
- * Swap.
- *
- * Exchanges the quantum states of two qubits.
- */
-Swap::Swap(Qubit first, Qubit second) : TwoQubit<Swap>(first, second) {
-  validate_distinct_qubits("SWAP", {first_, second_});
+Swap::Swap(types::qubit first, types::qubit second) : TwoQubit<Swap>(first, second) {
+  validate_distinct_qubits("SWAP", {first, second});
 }
 
 std::string Swap::name() const {
@@ -114,12 +104,14 @@ std::string Swap::name() const {
   return oss.str();
 }
 
-Matrix Swap::unitary() const {
-  Matrix matrix = Matrix::Identity(4, 4);
-  matrix(1, 1) = 0.0;
-  matrix(2, 2) = 0.0;
-  matrix(1, 2) = 1.0;
-  matrix(2, 1) = 1.0;
+types::c_mat Swap::unitary() const {
+  types::c_mat matrix = types::c_mat::Identity(4, 4);
+
+  matrix(1, 1) = constants::ZERO;
+  matrix(2, 2) = constants::ZERO;
+  matrix(1, 2) = constants::ONE;
+  matrix(2, 1) = constants::ONE;
+
   return matrix;
 }
 
