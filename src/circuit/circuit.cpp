@@ -40,7 +40,7 @@ const std::vector<Instruction>& QuantumCircuit::instructions() const noexcept {
 }
 
 QuantumCircuit& QuantumCircuit::add(const QuantumGate& gate) {
-  validate_gate(gate);
+  validate_gate(gate, "QuantumCircuit::add()");
   instructions_.emplace_back(GateInstruction{gate.clone()});
 
   return *this;
@@ -51,7 +51,7 @@ QuantumCircuit& QuantumCircuit::add(std::unique_ptr<QuantumGate> gate) {
     throw exception::InvalidArgument("QuantumCircuit::add()", "received a null gate");
   }
 
-  validate_gate(*gate);
+  validate_gate(*gate, "QuantumCircuit::add()");
   instructions_.emplace_back(GateInstruction{std::move(gate)});
 
   return *this;
@@ -59,8 +59,8 @@ QuantumCircuit& QuantumCircuit::add(std::unique_ptr<QuantumGate> gate) {
 
 QuantumCircuit& QuantumCircuit::conditional_add(types::clbit clbit, bool value,
                                                 const QuantumGate& gate) {
-  validate_clbit(clbit);
-  validate_gate(gate);
+  validate_clbit(clbit, "QuantumCircuit::conditional_add()");
+  validate_gate(gate, "QuantumCircuit::conditional_add()");
   instructions_.emplace_back(GateInstruction{
       gate.clone(), ClassicalCondition{.clbit = clbit, .value = value}});
 
@@ -69,14 +69,14 @@ QuantumCircuit& QuantumCircuit::conditional_add(types::clbit clbit, bool value,
 
 QuantumCircuit& QuantumCircuit::conditional_add(types::clbit clbit, bool value,
                                                 std::unique_ptr<QuantumGate> gate) {
-  validate_clbit(clbit);
+  validate_clbit(clbit, "QuantumCircuit::conditional_add()");
 
   if (!gate) {
     throw exception::InvalidArgument("QuantumCircuit::conditional_add()",
                                      "received a null gate");
   }
 
-  validate_gate(*gate);
+  validate_gate(*gate, "QuantumCircuit::conditional_add()");
   instructions_.emplace_back(GateInstruction{
       std::move(gate), ClassicalCondition{.clbit = clbit, .value = value}});
 
@@ -84,7 +84,7 @@ QuantumCircuit& QuantumCircuit::conditional_add(types::clbit clbit, bool value,
 }
 
 QuantumCircuit& QuantumCircuit::reset(types::qubit qubit) {
-  validate_qubit(qubit);
+  validate_qubit(qubit, "QuantumCircuit::reset()");
   instructions_.emplace_back(ResetInstruction{qubit});
 
   return *this;
