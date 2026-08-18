@@ -35,12 +35,12 @@ public:
    *
    * @param index Position of this bit in its classical register.
    */
-  explicit ClassicalBit(Clbit index);
+  explicit ClassicalBit(types::clbit index);
 
   /**
    * @brief Returns this bit's register index.
    */
-  Clbit index() const noexcept;
+  types::clbit index() const noexcept;
 
   /**
    * @brief Checks whether this bit contains a measurement outcome.
@@ -76,7 +76,7 @@ public:
   void clear() noexcept;
 
 private:
-  Clbit index_{};
+  types::clbit index_{};
   std::optional<bool> value_;
 };
 
@@ -93,12 +93,12 @@ public:
    *
    * @param size Number of classical bits in the register.
    */
-  explicit ClassicalRegister(Index size = 0);
+  explicit ClassicalRegister(std::size_t size = 0);
 
   /**
    * @brief Returns the number of classical bits.
    */
-  Index size() const noexcept;
+  std::size_t size() const noexcept;
 
   /**
    * @brief Checks whether a classical bit contains a measurement outcome.
@@ -107,7 +107,7 @@ public:
    *
    * @throws std::out_of_range If clbit is outside the register.
    */
-  bool has_value(Clbit clbit) const;
+  bool has_value(types::clbit clbit) const;
 
   /**
    * @brief Returns a measured classical bit value.
@@ -118,7 +118,7 @@ public:
    * @throws std::out_of_range If clbit is outside the register.
    * @throws std::runtime_error If the bit has no stored outcome.
    */
-  bool get(Clbit clbit) const;
+  bool get(types::clbit clbit) const;
 
   /**
    * @brief Returns an optional measured classical bit value.
@@ -128,7 +128,7 @@ public:
    *
    * @throws std::out_of_range If clbit is outside the register.
    */
-  std::optional<bool> get_raw(Clbit clbit) const;
+  std::optional<bool> get_raw(types::clbit clbit) const;
 
   /**
    * @brief Stores a measurement outcome in a classical bit.
@@ -138,7 +138,7 @@ public:
    *
    * @throws std::out_of_range If clbit is outside the register.
    */
-  void set(Clbit clbit, bool value);
+  void set(types::clbit clbit, bool value);
 
   /**
    * @brief Clears all stored measurement outcomes.
@@ -164,7 +164,7 @@ public:
 private:
   std::vector<ClassicalBit> bits_;
 
-  void validate_clbit(Clbit clbit) const;
+  void validate_clbit(types::clbit clbit) const;
 };
 
 /**
@@ -180,12 +180,12 @@ public:
    *
    * @param index Qubit index.
    */
-  explicit QuantumBit(Qubit index);
+  explicit QuantumBit(types::qubit index);
 
   /**
    * @brief Returns the qubit index.
    */
-  Qubit index() const noexcept;
+  types::qubit index() const noexcept;
 
   /**
    * @brief Returns the optional qubit label.
@@ -200,7 +200,7 @@ public:
   void set_label(std::string label);
 
 private:
-  Qubit index_{};
+  types::qubit index_{};
   std::optional<std::string> label_;
 };
 
@@ -217,12 +217,12 @@ public:
    *
    * @param size Number of qubits in the register.
    */
-  explicit QuantumRegister(Index size = 0);
+  explicit QuantumRegister(std::size_t size = 0);
 
   /**
    * @brief Returns the number of qubits.
    */
-  Index size() const noexcept;
+  std::size_t size() const noexcept;
 
   /**
    * @brief Returns true when the register is empty.
@@ -249,7 +249,7 @@ public:
    *
    * @throws std::out_of_range If qubit is outside the register.
    */
-  const QuantumBit& at(Qubit qubit) const;
+  const QuantumBit& at(types::qubit qubit) const;
 
   /**
    * @brief Returns a mutable qubit by index.
@@ -259,21 +259,21 @@ public:
    *
    * @throws std::out_of_range If qubit is outside the register.
    */
-  QuantumBit& at(Qubit qubit);
+  QuantumBit& at(types::qubit qubit);
 
   /**
    * @brief Returns a qubit by index.
    *
    * @note This performs the same validation as at().
    */
-  const QuantumBit& operator[](Qubit qubit) const;
+  const QuantumBit& operator[](types::qubit qubit) const;
 
   /**
    * @brief Returns a mutable qubit by index.
    *
    * @note This performs the same validation as at().
    */
-  QuantumBit& operator[](Qubit qubit);
+  QuantumBit& operator[](types::qubit qubit);
 
   /**
    * @brief Appends one qubit and returns its handle.
@@ -287,7 +287,7 @@ public:
    *
    * @param count Number of qubits to append.
    */
-  void add_qubits(Index count);
+  void add_qubits(std::size_t count);
 
   /**
    * @brief Returns all qubit handles.
@@ -298,7 +298,7 @@ private:
   std::vector<QuantumBit> qubits_;
   std::optional<std::string> label_;
 
-  void validate_qubit(Qubit qubit) const;
+  void validate_qubit(types::qubit qubit) const;
 };
 
 }  // namespace quira
