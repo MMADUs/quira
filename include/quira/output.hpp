@@ -15,7 +15,6 @@
 #pragma once
 
 #include "quira/register.hpp"
-#include "quira/types.hpp"
 
 #include <optional>
 #include <string>
@@ -26,73 +25,94 @@
 namespace quira {
 
 /**
- * @brief Aggregated result from running a circuit for one or more shots.
+ * @brief Aggregated output from running a circuit.
  *
- * RunResult stores the classical register produced by each shot and provides
- * Qiskit-like helpers for counts, probabilities, and the most frequent
- * measurement outcome.
+ * SimulationOutput stores one ClassicalRegister for each accepted shot. If a
+ * circuit contains post-selection, some requested shots may be rejected and are
+ * tracked separately from accepted shots.
+ *
+ * Counts and probabilities are computed from accepted shots only.
  */
 class SimulationOutput {
 public:
   /**
-   * @brief Creates a run result from per-shot classical registers.
+   * @brief Creates simulation output from accepted shot registers.
    *
-   * @param shots Classical registers produced by individual shots.
-   * @param shot_count Number of requested shots.
+   * @param shots Classical registers produced by accepted shots.
+   * @param requested_shots Number of shots requested by the caller.
+   * @param rejected_shots Number of shots rejected by post-selection.
    */
-  SimulationOutput(std::vector<ClassicalRegister> shots, Index shot_count);
+  SimulationOutput(std::vector<ClassicalRegister> shots, std::size_t requested_shots,
+                   std::size_t rejected_shots = 0);
 
   /**
    * @brief Returns the number of requested shots.
+   *
+   * @return Requested shot count, including accepted and rejected shots.
    */
-  Index shots() const noexcept;
+  [[nodiscard]] std::size_t shots() const noexcept;
 
   /**
-   * @brief Returns all per-shot classical registers.
+   * @brief Returns the number of accepted shots.
    *
-   * @return Read-only shot register storage.
+   * @return Number of stored shot registers.
    */
-  const std::vector<ClassicalRegister>& shot_registers() const noexcept;
+  [[nodiscard]] std::size_t accepted_shots() const noexcept;
 
   /**
-   * @brief Returns one shot's classical register.
+   * @brief Returns the number of rejected shots.
    *
-   * @param index Shot index.
-   * @return Read-only classical register for the selected shot.
-   *
-   * @throws std::out_of_range If index is outside the stored shots.
+   * @return Number of shots rejected by post-selection.
    */
-  const ClassicalRegister& shot(Index index) const;
+  [[nodiscard]] std::size_t rejected_shots() const noexcept;
 
   /**
-   * @brief Counts measurement outcomes across all shots.
+   * @brief Returns all accepted per-shot classical registers.
+   *
+   * @return Read-only accepted shot register storage.
+   */
+  [[nodiscard]] const std::vector<ClassicalRegister>& shot_registers() const noexcept;
+
+  /**
+   * @brief Returns one accepted shot's classical register.
+   *
+   * @param index Accepted shot index.
+   * @return Read-only classical register for the selected accepted shot.
+   *
+   * @throws std::out_of_range If index is outside accepted shots.
+   */
+  [[nodiscard]] const ClassicalRegister& shot(std::size_t index) const;
+
+  /**
+   * @brief Counts accepted measurement outcomes.
    *
    * @return Map from measured bit string to occurrence count.
    *
    * @note Shots with no measured classical bits are ignored.
    */
-  std::unordered_map<std::string, Index> get_counts() const;
+  [[nodiscard]] std::unordered_map<std::string, std::size_t> get_counts() const;
 
   /**
-   * @brief Computes measurement outcome probabilities.
+   * @brief Computes empirical probabilities from accepted shots.
    *
-   * @return Map from measured bit string to empirical probability.
+   * @return Map from measured bit string to probability.
    *
-   * @note Probabilities are computed as count divided by the requested shot
-   * count.
+   * @note Probabilities use accepted_shots() as the denominator, not shots().
    */
-  std::unordered_map<std::string, double> get_probabilities() const;
+  [[nodiscard]] std::unordered_map<std::string, double> get_probabilities() const;
 
   /**
-   * @brief Returns the most frequent measurement outcome.
+   * @brief Returns the most frequent accepted measurement outcome.
    *
    * @return Empty optional when there are no measured outcomes.
    */
-  std::optional<std::pair<std::string, Index>> get_most_frequent() const;
+  [[nodiscard]] std::optional<std::pair<std::string, std::size_t>> get_most_frequent()
+      const;
 
 private:
   std::vector<ClassicalRegister> shot_registers_;
-  Index shots_{};
+  std::size_t requested_shots_{};
+  std::size_t rejected_shots_{};
 };
 
 }  // namespace quira
