@@ -57,4 +57,23 @@ public:
   types::c_mat unitary() const override;
 };
 
+/**
+ * @brief Controlled phase gate diag(1, 1, 1, exp(i theta)).
+ */
+class CP final : public TwoQubit<CP> {
+public:
+  CP(types::qubit control, types::qubit target, types::real_n theta);
+
+  std::string name() const override;
+
+  types::c_mat unitary() const override;
+
+  types::qubit control() const noexcept;
+  types::qubit target() const noexcept;
+  types::real_n theta() const noexcept;
+
+private:
+  types::real_n theta_{};
+};
+
 }  // namespace quira

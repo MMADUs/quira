@@ -115,4 +115,34 @@ types::c_mat Swap::unitary() const {
   return matrix;
 }
 
+CP::CP(types::qubit control, types::qubit target, types::real_n theta)
+    : TwoQubit<CP>(control, target), theta_(theta) {
+  validate_distinct_qubits("ControlledPhase", {control, target});
+}
+
+std::string CP::name() const {
+  std::ostringstream oss;
+  oss << "ControlledPhase(control=" << control() << ", target=" << target()
+      << ", theta=" << theta_ << ")";
+  return oss.str();
+}
+
+types::c_mat CP::unitary() const {
+  types::c_mat matrix = types::c_mat::Identity(4, 4);
+  matrix(3, 3) = std::exp(constants::IM * theta_);
+  return matrix;
+}
+
+types::qubit CP::control() const noexcept {
+  return first();
+}
+
+types::qubit CP::target() const noexcept {
+  return second();
+}
+
+types::real_n CP::theta() const noexcept {
+  return theta_;
+}
+
 }  // namespace quira
